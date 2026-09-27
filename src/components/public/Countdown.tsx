@@ -8,7 +8,7 @@ interface CountdownProps {
 }
 
 export const Countdown: React.FC<CountdownProps> = ({
-  targetDate = '2026-06-20T15:00:00+02:00',
+  targetDate = '2026-12-05T15:00:00+00:00', // Samedi 5 Décembre 2026
 }) => {
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
@@ -46,7 +46,7 @@ export const Countdown: React.FC<CountdownProps> = ({
   if (!isClient) {
     return (
       <div className="grid grid-cols-4 gap-2 sm:gap-4 max-w-lg mx-auto opacity-0">
-        <div className="h-20 bg-white/20 rounded-2xl" />
+        <div className="h-20 bg-white/40 rounded-2xl" />
       </div>
     );
   }
@@ -68,11 +68,11 @@ export const Countdown: React.FC<CountdownProps> = ({
           transition={{ delay: index * 0.1, duration: 0.5 }}
           className="relative group"
         >
-          <div className="glass-card-gold rounded-2xl p-3 sm:p-5 text-center transition-all duration-300 transform group-hover:-translate-y-1 shadow-sm group-hover:shadow-gold">
-            <span className="block font-serif-luxury text-2xl sm:text-4xl lg:text-5xl font-bold text-zinc-900 dark:text-gold-200">
+          <div className="glass-card-gold rounded-2xl p-3.5 sm:p-5 text-center transition-all duration-300 transform group-hover:-translate-y-1 shadow-sm group-hover:shadow-gold border border-gold-300/80 bg-white/95">
+            <span className="block font-serif-luxury text-2xl sm:text-4xl lg:text-5xl font-bold text-royal-900 dark:text-gold-300">
               {String(unit.value).padStart(2, '0')}
             </span>
-            <span className="block font-sans text-[10px] sm:text-xs uppercase tracking-widest text-zinc-500 dark:text-zinc-400 mt-1 font-semibold">
+            <span className="block font-sans text-[10px] sm:text-xs uppercase tracking-widest text-royal-700/70 dark:text-zinc-400 mt-1 font-semibold">
               {unit.label}
             </span>
           </div>

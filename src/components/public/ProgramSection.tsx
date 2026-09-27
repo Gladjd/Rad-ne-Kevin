@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Calendar,
@@ -11,110 +11,119 @@ import {
   Car,
   Hotel,
   HelpCircle,
-  HeartHandshake,
   Wine,
   Moon,
   Sun,
-  ShieldCheck,
   X,
   Navigation,
+  Church,
 } from 'lucide-react';
 import { INITIAL_EVENTS } from '@/lib/mock-data';
+import { weddingStore } from '@/lib/supabase/client';
 import { formatDate, formatTime } from '@/lib/utils';
 import { EventItem } from '@/lib/database.types';
 
 export const ProgramSection: React.FC = () => {
+  const [events, setEvents] = useState<EventItem[]>(INITIAL_EVENTS);
   const [activeTab, setActiveTab] = useState<'programme' | 'logistique' | 'faq'>('programme');
   const [selectedMapEvent, setSelectedMapEvent] = useState<EventItem | null>(null);
 
+  useEffect(() => {
+    const loadEvents = async () => {
+      const data = await weddingStore.getEvents();
+      if (data && data.length > 0) {
+        setEvents(data);
+      }
+    };
+    loadEvents();
+    const handleDataChanged = () => loadEvents();
+    window.addEventListener('wedding_data_changed', handleDataChanged);
+    return () => window.removeEventListener('wedding_data_changed', handleDataChanged);
+  }, []);
+
   const getEventIcon = (iconName?: string) => {
     switch (iconName) {
+      case 'heart':
+      case 'church':
+        return <Church className="w-5 h-5 text-royal-700 dark:text-gold-400" />;
       case 'wine':
-        return <Wine className="w-5 h-5 text-gold-600" />;
+        return <Wine className="w-5 h-5 text-gold-600 dark:text-gold-400" />;
       case 'sun':
         return <Sun className="w-5 h-5 text-amber-500" />;
       case 'sparkles':
-        return <Moon className="w-5 h-5 text-indigo-500" />;
+        return <Sparkles className="w-5 h-5 text-royal-600 dark:text-gold-300" />;
       default:
-        return <Sparkles className="w-5 h-5 text-rose-500" />;
+        return <Sparkles className="w-5 h-5 text-gold-600" />;
     }
-  };
-
-  const getUniversalMapsUrl = (lat: number, lng: number, address: string) => {
-    return {
-      google: `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
-      apple: `https://maps.apple.com/?daddr=${lat},${lng}&dirflg=d`,
-      waze: `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`,
-    };
   };
 
   const hotels = [
     {
-      name: 'Hôtel Bastide Saint-Antoine (5★ Relais & Châteaux)',
-      distance: 'À 5 min du domaine',
-      address: '48 Avenue Henri Dunant, 06130 Grasse',
-      price: 'Tarif préférentiel code : RADENEKEVIN2026',
-      link: 'https://maps.google.com/?q=La+Bastide+Saint+Antoine+Grasse',
+      name: 'Radisson Blu Hotel, Dakar Sea Plaza (5★)',
+      distance: 'À 12 min de la Paroisse de Dieuppeul',
+      address: 'Route de la Corniche Ouest, Dakar',
+      price: 'Tarif préférentiel mariage : RADENE-KEVIN-2026',
+      link: 'https://maps.google.com/?q=Radisson+Blu+Hotel+Dakar',
     },
     {
-      name: 'Best Western Plus Elixir Grasse (4★)',
-      distance: 'À 8 min du domaine',
-      address: 'Rue Martine Carol, 06130 Grasse',
-      price: 'Chambres doubles & familiales',
-      link: 'https://maps.google.com/?q=Best+Western+Plus+Elixir+Grasse',
+      name: 'Pullman Dakar Teranga (5★)',
+      distance: 'À 15 min de la Paroisse de Dieuppeul',
+      address: '10 Rue Colbert, Plateau, Dakar',
+      price: 'Vue imprenable sur l’Océan & Île de Gorée',
+      link: 'https://maps.google.com/?q=Pullman+Dakar+Teranga',
     },
     {
-      name: 'Domaine de la Source (Maisons d\'hôtes de charme)',
-      distance: 'À 10 min du domaine',
-      address: 'Chemin des Chênes, 06530 Peymeinade',
-      price: 'Idéal pour les groupes d\'amis',
-      link: 'https://maps.google.com/?q=Domaine+de+la+Source+Peymeinade',
+      name: 'Hôtel Le Djoloff (Boutique Hôtel de Charme)',
+      distance: 'À 10 min de la Paroisse de Dieuppeul',
+      address: '7 Rue Nani, Fann Hock, Dakar',
+      price: 'Idéal pour séjour intime & familial',
+      link: 'https://maps.google.com/?q=Hotel+Le+Djoloff+Dakar',
     },
   ];
 
   const faqs = [
     {
       q: 'Quel est le dress code général du mariage ?',
-      a: 'Nous vous invitons à revêtir vos plus belles tenues de cocktail élégantes avec une touche dorée ou pastel pour la cérémonie et le vin d\'honneur. Pour le dîner, le Black Tie Optional (smoking ou costume sombre, robes longues ou mi-longues) est le bienvenu.',
+      a: 'Pour la bénédiction nuptiale à la Paroisse de Dieuppeul et le cocktail, nous vous invitons à porter des tenues très élégantes avec des nuances de Blanc Pur, Or Métallique ou Bleu Roi. Pour le dîner de gala, le Black Tie (smoking, costumes d’apparat et robes longues de soirée) est vivement souhaité.',
     },
     {
-      q: 'Y a-t-il des navettes organisées pour la soirée ?',
-      a: 'Oui ! Des navettes privées feront des allers-retours entre le Château Saint-Georges et les principaux hôtels partenaires de minuit à 05h00 du matin pour que chacun puisse profiter de la fête en toute sécurité.',
+      q: 'À quelle heure est-il recommandé d’arriver à l’église ?',
+      a: 'La bénédiction nuptiale débute précisément à 15h00. Nous prions les invités d’arriver dès 14h30 à la Paroisse Sainte-Thérèse de Dieuppeul pour l’installation et l’accueil protocolaire.',
     },
     {
-      q: 'Les enfants sont-ils conviés ?',
-      a: 'Oui, nous avons prévu un espace dédié avec des animateurs professionnels et baby-sitters diplômées ainsi qu\'un menu enfant adapté.',
+      q: 'Y a-t-il des navettes et un service de sécurité organisés ?',
+      a: 'Oui, un service de navettes climatisées et un protocole de sécurité dédié assureront les liaisons entre l’église, les lieux de réception et les principaux hôtels.',
     },
     {
-      q: 'Y a-t-il un parking sur place ?',
-      a: 'Oui, un vaste parking surveillé et gratuit avec service voiturier est à votre disposition dès votre arrivée aux grilles du Château.',
+      q: 'Comment utiliser mon pass QR Code ?',
+      a: 'Après confirmation de votre présence dans l’onglet RSVP, votre QR Pass personnalisé est généré. Présentez-le sur votre téléphone ou imprimé à l’entrée de la réception pour un accueil fluide.',
     },
   ];
 
   return (
-    <section id="programme" className="py-24 px-4 bg-ivory dark:bg-zinc-950 relative">
-      <div className="max-w-5xl mx-auto">
+    <section id="programme" className="py-24 px-4 bg-paper-textured relative paper-texture">
+      <div className="max-w-5xl mx-auto relative z-10">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-14">
-          <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-gold-100 dark:bg-zinc-800 border border-gold-200 text-gold-800 dark:text-gold-300 text-xs uppercase tracking-widest font-semibold mb-3">
-            <Calendar className="w-3.5 h-3.5 text-gold-600" />
-            <span>Déroulement des Festivités</span>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-royal-50 dark:bg-royal-950 border border-gold-300 text-royal-800 dark:text-gold-300 text-xs uppercase tracking-widest font-semibold mb-3 shadow-sm">
+            <Calendar className="w-3.5 h-3.5 text-royal-700 dark:text-gold-400" />
+            <span>Déroulement du 5 Décembre 2026</span>
           </div>
-          <h2 className="font-serif-luxury text-4xl sm:text-5xl lg:text-6xl text-zinc-900 dark:text-zinc-50 font-normal">
-            Le Programme & Infos Pratiques
+          <h2 className="font-serif-luxury text-4xl sm:text-5xl lg:text-6xl text-royal-950 dark:text-zinc-50 font-normal">
+            Le Programme &amp; Infos Pratiques
           </h2>
-          <p className="font-serif-luxury italic text-lg text-zinc-600 dark:text-zinc-400 mt-2">
-            Retrouvez tous les temps forts et les informations pour passer un séjour d'exception.
+          <p className="font-serif-luxury italic text-lg sm:text-xl text-royal-800/80 dark:text-zinc-300 mt-2">
+            Retrouvez tous les temps forts, horaires et détails de notre sainte célébration.
           </p>
 
           {/* Navigation Tabs */}
-          <div className="flex items-center justify-center gap-2 mt-8 bg-gold-50/80 dark:bg-zinc-900 p-1.5 rounded-full max-w-md mx-auto border border-gold-200/60 shadow-inner">
+          <div className="flex items-center justify-center gap-2 mt-8 bg-royal-50/80 dark:bg-royal-950/80 p-1.5 rounded-full max-w-md mx-auto border border-gold-300 shadow-inner">
             <button
               onClick={() => setActiveTab('programme')}
               className={`flex-1 py-2 px-4 rounded-full text-xs font-semibold uppercase tracking-wider transition-all ${
                 activeTab === 'programme'
-                  ? 'bg-gold-500 text-white shadow-sm'
-                  : 'text-zinc-600 dark:text-zinc-300 hover:text-zinc-900'
+                  ? 'bg-gradient-to-r from-gold-500 to-gold-600 text-white shadow-gold'
+                  : 'text-royal-800 dark:text-zinc-300 hover:text-royal-950'
               }`}
             >
               Programme
@@ -123,8 +132,8 @@ export const ProgramSection: React.FC = () => {
               onClick={() => setActiveTab('logistique')}
               className={`flex-1 py-2 px-4 rounded-full text-xs font-semibold uppercase tracking-wider transition-all ${
                 activeTab === 'logistique'
-                  ? 'bg-gold-500 text-white shadow-sm'
-                  : 'text-zinc-600 dark:text-zinc-300 hover:text-zinc-900'
+                  ? 'bg-gradient-to-r from-gold-500 to-gold-600 text-white shadow-gold'
+                  : 'text-royal-800 dark:text-zinc-300 hover:text-royal-950'
               }`}
             >
               Hébergements
@@ -133,8 +142,8 @@ export const ProgramSection: React.FC = () => {
               onClick={() => setActiveTab('faq')}
               className={`flex-1 py-2 px-4 rounded-full text-xs font-semibold uppercase tracking-wider transition-all ${
                 activeTab === 'faq'
-                  ? 'bg-gold-500 text-white shadow-sm'
-                  : 'text-zinc-600 dark:text-zinc-300 hover:text-zinc-900'
+                  ? 'bg-gradient-to-r from-gold-500 to-gold-600 text-white shadow-gold'
+                  : 'text-royal-800 dark:text-zinc-300 hover:text-royal-950'
               }`}
             >
               FAQ
@@ -145,10 +154,9 @@ export const ProgramSection: React.FC = () => {
         {/* Tab 1: Programme Events */}
         {activeTab === 'programme' && (
           <div className="space-y-6">
-            {INITIAL_EVENTS.map((evt, idx) => {
-              const lat = evt.coordonnees_gps?.lat || 43.6622;
-              const lng = evt.coordonnees_gps?.lng || 6.9248;
-              const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+            {events.map((evt, idx) => {
+              const lat = evt.coordonnees_gps?.lat || 14.7126;
+              const lng = evt.coordonnees_gps?.lng || -17.4589;
 
               return (
                 <motion.div
@@ -156,34 +164,34 @@ export const ProgramSection: React.FC = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: idx * 0.1 }}
-                  className="glass-card-gold rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-gold transition-all"
+                  className="glass-card-gold rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-gold transition-all border border-gold-300/80 bg-white/95"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="p-3.5 rounded-2xl bg-gold-100 dark:bg-zinc-800 border border-gold-200 shrink-0">
+                    <div className="p-3.5 rounded-2xl bg-royal-50 dark:bg-royal-950 border border-gold-300 shrink-0">
                       {getEventIcon(evt.icone)}
                     </div>
                     <div>
-                      <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                        <span className="px-2.5 py-0.5 rounded-full bg-gold-500/10 text-gold-700 dark:text-gold-300 font-bold text-xs">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <span className="px-3 py-1 rounded-full bg-royal-100/70 text-royal-900 dark:text-gold-300 font-bold text-xs border border-royal-200">
                           {formatTime(evt.date_heure)}
                         </span>
-                        <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                        <span className="text-xs text-royal-700/80 dark:text-zinc-400 font-medium">
                           {formatDate(evt.date_heure, 'short')}
                         </span>
                         {evt.dress_code && (
-                          <span className="text-[11px] px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
-                            👗 {evt.dress_code}
+                          <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-gold-50 text-gold-900 border border-gold-200 font-medium">
+                            ✨ {evt.dress_code}
                           </span>
                         )}
                       </div>
-                      <h3 className="font-serif-luxury text-2xl font-semibold text-zinc-900 dark:text-zinc-50 mb-1">
+                      <h3 className="font-serif-luxury text-2xl sm:text-3xl font-semibold text-royal-950 dark:text-zinc-50 mb-1">
                         {evt.nom}
                       </h3>
-                      <div className="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400 mb-2 font-medium">
+                      <div className="flex items-center gap-1.5 text-xs text-royal-700 dark:text-gold-400 mb-3 font-semibold">
                         <MapPin className="w-3.5 h-3.5 text-gold-600" />
                         <span>{evt.lieu} — {evt.adresse}</span>
                       </div>
-                      <p className="text-zinc-700 dark:text-zinc-300 text-sm leading-relaxed max-w-2xl">
+                      <p className="text-royal-950/80 dark:text-zinc-300 text-sm leading-relaxed max-w-2xl font-sans">
                         {evt.description}
                       </p>
                     </div>
@@ -194,11 +202,11 @@ export const ProgramSection: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setSelectedMapEvent(evt)}
-                      className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-ivory hover:bg-gold-50 dark:bg-zinc-800 dark:hover:bg-zinc-700 border border-gold-300 text-gold-800 dark:text-gold-200 text-xs uppercase tracking-widest font-semibold shadow-sm transition-all active:scale-95"
+                      className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-royal-900 hover:bg-royal-800 text-white dark:bg-zinc-800 dark:hover:bg-zinc-700 border border-gold-400 text-xs uppercase tracking-widest font-semibold shadow-gold hover:shadow-gold-glow transition-all active:scale-95"
                     >
-                      <MapPin className="w-4 h-4 text-gold-600" />
+                      <MapPin className="w-4 h-4 text-gold-400" />
                       <span>Itinéraire &amp; GPS</span>
-                      <ExternalLink className="w-3.5 h-3.5 opacity-60" />
+                      <ExternalLink className="w-3.5 h-3.5 opacity-70" />
                     </button>
                   </div>
                 </motion.div>
@@ -212,19 +220,19 @@ export const ProgramSection: React.FC = () => {
           <div className="space-y-6 animate-in fade-in duration-300">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {hotels.map((h, i) => (
-                <div key={i} className="glass-card-gold rounded-3xl p-6 flex flex-col justify-between">
+                <div key={i} className="glass-card-gold rounded-3xl p-6 flex flex-col justify-between border border-gold-300/80 bg-white/95">
                   <div>
-                    <div className="p-3 w-fit rounded-2xl bg-gold-100 dark:bg-zinc-800 text-gold-700 mb-4">
+                    <div className="p-3 w-fit rounded-2xl bg-royal-50 text-royal-700 mb-4 border border-gold-200">
                       <Hotel className="w-5 h-5" />
                     </div>
-                    <h3 className="font-serif-luxury text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">
+                    <h3 className="font-serif-luxury text-xl font-bold text-royal-950 dark:text-zinc-100 mb-2">
                       {h.name}
                     </h3>
-                    <p className="text-xs text-gold-700 dark:text-gold-300 font-semibold mb-1">
+                    <p className="text-xs text-royal-700 dark:text-gold-300 font-semibold mb-1">
                       {h.distance}
                     </p>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3">{h.address}</p>
-                    <div className="px-3 py-1.5 rounded-xl bg-gold-50 dark:bg-zinc-800/80 border border-gold-200 text-xs text-zinc-700 dark:text-zinc-300 font-medium mb-4">
+                    <div className="px-3 py-1.5 rounded-xl bg-gold-50/80 border border-gold-200 text-xs text-royal-900 font-medium mb-4">
                       {h.price}
                     </div>
                   </div>
@@ -232,7 +240,7 @@ export const ProgramSection: React.FC = () => {
                     href={h.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl border border-gold-300 text-xs uppercase tracking-widest font-semibold text-gold-700 dark:text-gold-200 hover:bg-gold-500 hover:text-white transition-colors"
+                    className="inline-flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl border border-gold-400 text-xs uppercase tracking-widest font-semibold text-royal-900 hover:bg-gold-500 hover:text-white transition-colors"
                   >
                     <span>Voir sur la carte</span>
                     <ExternalLink className="w-3.5 h-3.5" />
@@ -242,16 +250,16 @@ export const ProgramSection: React.FC = () => {
             </div>
 
             {/* Shuttle Service Card */}
-            <div className="glass-card-gold rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-6 border-l-4 border-l-gold-500">
-              <div className="p-4 rounded-2xl bg-gold-100 dark:bg-zinc-800 text-gold-700 shrink-0">
-                <Car className="w-8 h-8" />
+            <div className="glass-card-gold rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-6 border-l-4 border-l-gold-500 bg-white/95">
+              <div className="p-4 rounded-2xl bg-royal-50 text-royal-700 shrink-0 border border-gold-200">
+                <Car className="w-8 h-8 text-gold-600" />
               </div>
               <div>
-                <h3 className="font-serif-luxury text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-1">
-                  Service de Navettes de Nuit
+                <h3 className="font-serif-luxury text-2xl font-bold text-royal-950 dark:text-zinc-100 mb-1">
+                  Service de Navettes &amp; Protocole Sécurisé
                 </h3>
-                <p className="text-zinc-700 dark:text-zinc-300 text-sm leading-relaxed">
-                  Pour votre confort et votre sécurité, des navettes Mercedes privées assureront les retours depuis le Château vers les hôtels partenaires et parkings de Grasse toutes les 30 minutes de <strong>00h00 à 05h00</strong>.
+                <p className="text-royal-950/80 dark:text-zinc-300 text-sm leading-relaxed">
+                  Pour votre confort et votre tranquillité, des navettes privées assureront les liaisons entre la Paroisse de Dieuppeul, les salons de réception et les principaux hôtels partenaires.
                 </p>
               </div>
             </div>
@@ -262,14 +270,14 @@ export const ProgramSection: React.FC = () => {
         {activeTab === 'faq' && (
           <div className="space-y-4 max-w-3xl mx-auto animate-in fade-in duration-300">
             {faqs.map((faq, idx) => (
-              <div key={idx} className="glass-card-gold rounded-2xl p-6 shadow-sm">
+              <div key={idx} className="glass-card-gold rounded-2xl p-6 shadow-sm border border-gold-300/80 bg-white/95">
                 <div className="flex items-start gap-3">
                   <HelpCircle className="w-5 h-5 text-gold-600 shrink-0 mt-0.5" />
                   <div>
-                    <h3 className="font-serif-luxury text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">
+                    <h3 className="font-serif-luxury text-xl font-bold text-royal-950 dark:text-zinc-100 mb-2">
                       {faq.q}
                     </h3>
-                    <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                    <p className="text-sm text-royal-950/80 dark:text-zinc-300 leading-relaxed font-sans">
                       {faq.a}
                     </p>
                   </div>
@@ -284,26 +292,26 @@ export const ProgramSection: React.FC = () => {
       <AnimatePresence>
         {selectedMapEvent && (
           <div
-            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+            className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
             onClick={() => setSelectedMapEvent(null)}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-gold-300 shadow-2xl relative my-8"
+              className="bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-gold-400 shadow-2xl relative my-8"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-start justify-between pb-4 border-b border-gold-100 dark:border-zinc-800">
                 <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-gold-100 dark:bg-zinc-800 text-gold-700">
+                  <div className="p-2 rounded-xl bg-royal-50 dark:bg-zinc-800 text-royal-700 dark:text-gold-400 border border-gold-200">
                     <Navigation className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-serif-luxury text-xl font-bold text-zinc-900 dark:text-zinc-100">
+                    <h3 className="font-serif-luxury text-xl font-bold text-royal-950 dark:text-zinc-100">
                       {selectedMapEvent.nom}
                     </h3>
-                    <p className="text-xs text-zinc-500">{selectedMapEvent.lieu}</p>
+                    <p className="text-xs text-royal-700/80">{selectedMapEvent.lieu}</p>
                   </div>
                 </div>
                 <button
@@ -315,49 +323,57 @@ export const ProgramSection: React.FC = () => {
               </div>
 
               {/* Map Embed Frame / Preview */}
-              <div className="my-5 rounded-2xl overflow-hidden border border-gold-200 h-64 bg-zinc-100 dark:bg-zinc-800 relative">
+              <div className="my-5 rounded-2xl overflow-hidden border border-gold-300 h-64 bg-zinc-100 dark:bg-zinc-800 relative shadow-inner">
                 <iframe
                   title="Carte du lieu"
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}
                   loading="lazy"
-                  src={`https://maps.google.com/maps?q=${selectedMapEvent.coordonnees_gps?.lat || 43.6622},${selectedMapEvent.coordonnees_gps?.lng || 6.9248}&hl=fr&z=14&output=embed`}
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(
+                    selectedMapEvent.lieu.includes('Dieuppeul')
+                      ? 'Paroisse Sainte Therese Dieuppeul Dakar'
+                      : `${selectedMapEvent.coordonnees_gps?.lat || 14.7126},${selectedMapEvent.coordonnees_gps?.lng || -17.4589}`
+                  )}&hl=fr&z=15&output=embed`}
                 />
               </div>
 
-              <div className="text-xs text-zinc-600 dark:text-zinc-300 mb-5 space-y-1">
+              <div className="text-xs text-royal-900 dark:text-zinc-300 mb-5 space-y-1 font-sans">
                 <p>📍 <strong>Adresse :</strong> {selectedMapEvent.adresse}</p>
-                <p>🚗 <strong>Parking :</strong> Service voiturier gratuit à l'entrée du Château</p>
+                <p>🚗 <strong>Accès &amp; Parking :</strong> Espaces dédiés aux invités du mariage</p>
               </div>
 
               {/* Universal Navigation Redirection Buttons */}
               <div className="space-y-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-2">
-                  Lancer le guidage GPS :
+                <span className="text-[10px] font-bold uppercase tracking-wider text-royal-700/70 block mb-2">
+                  Lancer le guidage GPS direct :
                 </span>
                 <div className="grid grid-cols-3 gap-2">
                   <a
-                    href={`https://www.google.com/maps/dir/?api=1&destination=${selectedMapEvent.coordonnees_gps?.lat || 43.6622},${selectedMapEvent.coordonnees_gps?.lng || 6.9248}`}
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+                      selectedMapEvent.lieu.includes('Dieuppeul')
+                        ? 'Paroisse Sainte Therese Dieuppeul Dakar'
+                        : `${selectedMapEvent.coordonnees_gps?.lat || 14.7126},${selectedMapEvent.coordonnees_gps?.lng || -17.4589}`
+                    )}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2.5 rounded-xl bg-gold-500 hover:bg-gold-600 text-white text-center text-xs font-semibold uppercase tracking-wider transition-colors shadow-sm flex flex-col items-center justify-center gap-1"
+                    className="p-3 rounded-xl bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-white text-center text-xs font-semibold uppercase tracking-wider transition-colors shadow-gold flex flex-col items-center justify-center gap-1"
                   >
                     <span>Google Maps</span>
                   </a>
                   <a
-                    href={`https://maps.apple.com/?daddr=${selectedMapEvent.coordonnees_gps?.lat || 43.6622},${selectedMapEvent.coordonnees_gps?.lng || 6.9248}&dirflg=d`}
+                    href={`https://maps.apple.com/?daddr=${selectedMapEvent.coordonnees_gps?.lat || 14.7126},${selectedMapEvent.coordonnees_gps?.lng || -17.4589}&dirflg=d`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-center text-xs font-semibold uppercase tracking-wider transition-colors shadow-sm flex flex-col items-center justify-center gap-1"
+                    className="p-3 rounded-xl bg-royal-900 hover:bg-royal-950 text-white text-center text-xs font-semibold uppercase tracking-wider transition-colors shadow-sm flex flex-col items-center justify-center gap-1 border border-gold-400"
                   >
                     <span>Apple Maps</span>
                   </a>
                   <a
-                    href={`https://waze.com/ul?ll=${selectedMapEvent.coordonnees_gps?.lat || 43.6622},${selectedMapEvent.coordonnees_gps?.lng || 6.9248}&navigate=yes`}
+                    href={`https://waze.com/ul?ll=${selectedMapEvent.coordonnees_gps?.lat || 14.7126},${selectedMapEvent.coordonnees_gps?.lng || -17.4589}&navigate=yes`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white text-center text-xs font-semibold uppercase tracking-wider transition-colors shadow-sm flex flex-col items-center justify-center gap-1"
+                    className="p-3 rounded-xl bg-cyan-700 hover:bg-cyan-800 text-white text-center text-xs font-semibold uppercase tracking-wider transition-colors shadow-sm flex flex-col items-center justify-center gap-1"
                   >
                     <span>Waze</span>
                   </a>

@@ -11,36 +11,38 @@ interface HeroSectionProps {
 
 export const HeroSection: React.FC<HeroSectionProps> = ({ onRsvpClick }) => {
   return (
-    <section className="relative min-h-[92vh] sm:min-h-screen flex items-center justify-center overflow-hidden pt-24 pb-16 px-4">
-      {/* Ambient background imagery & gradient overlay */}
-      <div
-        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat transition-transform duration-1000 scale-105"
-        style={{
-          backgroundImage:
-            'url("https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=2000&q=85")',
-        }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-ivory/80 via-ivory/70 to-ivory dark:from-zinc-950/85 dark:via-zinc-950/80 dark:to-zinc-950" />
-      </div>
-
-      {/* Floating decorative sparkles */}
-      <div className="absolute inset-0 pointer-events-none z-0">
-        <div className="absolute top-1/4 left-10 w-72 h-72 bg-gold-300/20 rounded-full blur-3xl animate-pulse-glow" />
-        <div className="absolute bottom-1/4 right-10 w-80 h-80 bg-blush-300/20 rounded-full blur-3xl animate-pulse-glow delay-700" />
-      </div>
+    <section className="relative min-h-[95vh] sm:min-h-screen flex items-center justify-center overflow-hidden pt-28 pb-16 px-4 paper-texture">
+      {/* Subtle royal blue and gold watercolor washes in background */}
+      <div className="absolute top-1/6 left-1/2 -translate-x-1/2 w-[700px] h-[500px] bg-gradient-to-tr from-royal-100/40 via-gold-100/30 to-royal-50/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-96 h-96 bg-royal-100/30 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-20 left-10 w-80 h-80 bg-gold-100/40 rounded-full blur-3xl pointer-events-none" />
 
       {/* Main Hero Card Container */}
       <div className="relative z-10 max-w-4xl mx-auto text-center">
-        {/* Monogram / Top Badge */}
+        {/* Monogram / Top Logo Badge */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-panel border border-gold-300/60 text-gold-800 dark:text-gold-200 text-xs font-semibold tracking-widest uppercase mb-6 shadow-sm"
+          className="flex flex-col items-center justify-center mb-6"
         >
-          <Sparkles className="w-3.5 h-3.5 text-gold-500" />
-          <span>Mariage de Radene & Kevin</span>
-          <Sparkles className="w-3.5 h-3.5 text-gold-500" />
+          <div className="relative w-28 h-28 sm:w-36 sm:h-36 rounded-full p-1 border-2 border-gold-400 shadow-gold bg-white mb-4 hover:scale-105 transition-transform duration-500 group">
+            <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-paper-warm">
+              <img
+                src="/img/logo.png"
+                alt="Monogramme R & K - Radène & Kévin"
+                className="w-full h-full object-contain p-1 group-hover:scale-105 transition-transform duration-500"
+              />
+            </div>
+            {/* Ambient golden aura around monogram */}
+            <div className="absolute inset-0 rounded-full border border-gold-300/40 animate-pulse pointer-events-none" />
+          </div>
+
+          <div className="inline-flex items-center gap-2 px-5 py-1.5 rounded-full bg-white/90 dark:bg-royal-950/80 border border-gold-400 text-royal-900 dark:text-gold-300 text-xs font-bold tracking-widest uppercase shadow-sm">
+            <Sparkles className="w-3.5 h-3.5 text-gold-600" />
+            <span>Pureté • Amour • Charité</span>
+            <Sparkles className="w-3.5 h-3.5 text-gold-600" />
+          </div>
         </motion.div>
 
         {/* Calligraphy Names */}
@@ -48,19 +50,19 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onRsvpClick }) => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.2 }}
-          className="font-serif-luxury text-5xl sm:text-7xl lg:text-8xl font-normal text-zinc-900 dark:text-zinc-50 tracking-tight leading-none mb-4"
+          className="font-serif-luxury text-5xl sm:text-7xl lg:text-8xl font-normal text-royal-950 dark:text-zinc-50 tracking-tight leading-none mb-3"
         >
-          Radene <span className="font-script-calligraphy text-gold-500 text-6xl sm:text-8xl lg:text-9xl mx-1">&</span> Kevin
+          Radène <span className="font-script-calligraphy text-gold-500 text-6xl sm:text-8xl lg:text-9xl mx-1">&amp;</span> Kévin
         </motion.h1>
 
-        {/* Romantic tagline */}
+        {/* Romantic & Spiritual tagline */}
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.35 }}
-          className="font-serif-luxury italic text-xl sm:text-2xl text-zinc-700 dark:text-zinc-300 max-w-2xl mx-auto mb-6"
+          className="font-serif-luxury italic text-xl sm:text-2xl text-royal-900/85 dark:text-zinc-300 max-w-2xl mx-auto mb-6"
         >
-          « Nous avons l'immense joie de vous convier à célébrer notre union et le début de notre nouvelle aventure. »
+          « Ce que Dieu a uni, que l’homme ne le sépare point. Nous avons l’immense joie de vous convier à notre saint sacrement de mariage. »
         </motion.p>
 
         {/* Date & Location Pill Cards */}
@@ -68,21 +70,21 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onRsvpClick }) => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.45 }}
-          className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm font-medium tracking-wider uppercase text-zinc-800 dark:text-zinc-200 mb-10"
+          className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm font-semibold tracking-wider uppercase text-royal-950 dark:text-zinc-200 mb-8"
         >
-          <div className="flex items-center gap-2 glass-panel px-4 py-2 rounded-full border border-gold-200 shadow-sm">
-            <Calendar className="w-4 h-4 text-gold-600 dark:text-gold-400" />
-            <span>Samedi 20 Juin 2026</span>
+          <div className="flex items-center gap-2 bg-white/95 px-5 py-2.5 rounded-full border border-gold-400 shadow-sm">
+            <Calendar className="w-4 h-4 text-gold-600" />
+            <span>Samedi 5 Décembre 2026</span>
           </div>
-          <div className="flex items-center gap-2 glass-panel px-4 py-2 rounded-full border border-gold-200 shadow-sm">
-            <MapPin className="w-4 h-4 text-gold-600 dark:text-gold-400" />
-            <span>Château Saint-Georges • Grasse</span>
+          <div className="flex items-center gap-2 bg-white/95 px-5 py-2.5 rounded-full border border-gold-400 shadow-sm">
+            <MapPin className="w-4 h-4 text-gold-600" />
+            <span>Paroisse de Dieuppeul • Dakar</span>
           </div>
         </motion.div>
 
-        {/* Live Dynamic Countdown */}
+        {/* Live Dynamic Countdown to 5 Décembre 2026 */}
         <div className="mb-10">
-          <Countdown targetDate="2026-06-20T15:00:00+02:00" />
+          <Countdown targetDate="2026-12-05T15:00:00+00:00" />
         </div>
 
         {/* Action Buttons */}
@@ -102,9 +104,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onRsvpClick }) => {
 
           <a
             href="#histoire"
-            className="w-full sm:w-auto px-8 py-4 rounded-full glass-panel hover:bg-white/90 dark:hover:bg-zinc-800 border border-gold-300/80 text-zinc-800 dark:text-zinc-100 font-semibold text-xs sm:text-sm uppercase tracking-widest shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-8 py-4 rounded-full bg-white/95 hover:bg-gold-50/80 dark:bg-royal-950/80 dark:hover:bg-royal-900 border border-gold-400 text-royal-950 dark:text-zinc-100 font-semibold text-xs sm:text-sm uppercase tracking-widest shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2"
           >
-            <Heart className="w-4 h-4 text-rose-500" />
+            <Heart className="w-4 h-4 text-royal-700 dark:text-gold-400" />
             <span>Découvrir notre histoire</span>
           </a>
         </motion.div>
@@ -118,7 +120,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onRsvpClick }) => {
         >
           <a
             href="#histoire"
-            className="text-zinc-400 hover:text-gold-600 transition-colors animate-bounce p-2"
+            className="text-gold-600 hover:text-royal-900 transition-colors animate-bounce p-2"
             aria-label="Faire défiler"
           >
             <ChevronDown className="w-6 h-6" />

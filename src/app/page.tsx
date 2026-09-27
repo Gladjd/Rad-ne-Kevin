@@ -21,7 +21,7 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen bg-ivory text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50 overflow-x-hidden selection:bg-gold-200 selection:text-gold-900">
+    <main className="min-h-screen bg-pure text-royal-950 dark:bg-royal-950 dark:text-zinc-50 overflow-x-hidden selection:bg-gold-200 selection:text-royal-900 paper-texture">
       {/* Fixed Luxury Navigation */}
       <Navbar onOpenRsvp={scrollToRsvp} />
 
