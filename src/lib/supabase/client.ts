@@ -15,6 +15,20 @@ export const supabase = isSupabaseConfigured
   ? createClient<any>(supabaseUrl, supabaseAnonKey)
   : null;
 
+/**
+ * Generates a valid RFC4122 compliant UUID v4 string
+ */
+export function generateUUID(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 // ==============================================================================
 // LOCAL REACTIVE STORE (HYBRID SYSTEM: SUPABASE OR LOCALSTORAGE PERSISTENCE)
 // ==============================================================================
@@ -48,8 +62,12 @@ class WeddingDataStore {
   // --- EVENTS ---
   async getEvents(): Promise<EventItem[]> {
     if (supabase) {
-      const { data, error } = await supabase.from('events').select('*').order('ordre', { ascending: true });
-      if (!error && data && data.length) return data;
+      try {
+        const { data, error } = await supabase.from('events').select('*').order('ordre', { ascending: true });
+        if (!error && data && data.length > 0) return data;
+      } catch (err) {
+        console.warn('Supabase getEvents fallback to local data:', err);
+      }
     }
     return this.getItem('events', INITIAL_EVENTS);
   }
@@ -57,8 +75,12 @@ class WeddingDataStore {
   // --- TABLES ---
   async getTables(): Promise<TableItem[]> {
     if (supabase) {
-      const { data, error } = await supabase.from('tables').select('*');
-      if (!error && data && data.length) return data;
+      try {
+        const { data, error } = await supabase.from('tables').select('*');
+        if (!error && data && data.length > 0) return data;
+      } catch (err) {
+        console.warn('Supabase getTables fallback to local data:', err);
+      }
     }
     return this.getItem('tables', INITIAL_TABLES);
   }
@@ -74,7 +96,7 @@ class WeddingDataStore {
       else current.push(updated);
     } else {
       updated = {
-        id: 't-' + Date.now(),
+        id: generateUUID(),
         nom_numero: table.nom_numero || 'Nouvelle Table',
         capacite: table.capacite || 8,
         forme: table.forme || 'ronde',
@@ -88,7 +110,11 @@ class WeddingDataStore {
     }
 
     if (supabase) {
-      await supabase.from('tables').upsert(updated as any);
+      try {
+        await supabase.from('tables').upsert(updated as any);
+      } catch (err) {
+        console.warn('Supabase saveTable sync error:', err);
+      }
     }
     this.setItem('tables', current);
     return updated;
@@ -98,7 +124,11 @@ class WeddingDataStore {
     const current = await this.getTables();
     const filtered = current.filter(t => t.id !== tableId);
     if (supabase) {
-      await supabase.from('tables').delete().eq('id', tableId);
+      try {
+        await supabase.from('tables').delete().eq('id', tableId);
+      } catch (err) {
+        console.warn('Supabase deleteTable sync error:', err);
+      }
     }
     this.setItem('tables', filtered);
   }
@@ -106,8 +136,12 @@ class WeddingDataStore {
   // --- GUESTS ---
   async getGuests(): Promise<GuestItem[]> {
     if (supabase) {
-      const { data, error } = await supabase.from('guests').select('*').order('nom', { ascending: true });
-      if (!error && data && data.length) return data;
+      try {
+        const { data, error } = await supabase.from('guests').select('*').order('nom', { ascending: true });
+        if (!error && data && data.length > 0) return data;
+      } catch (err) {
+        console.warn('Supabase getGuests fallback to local data:', err);
+      }
     }
     return this.getItem('guests', INITIAL_GUESTS);
   }
@@ -150,7 +184,7 @@ class WeddingDataStore {
       for (let i = 0; i < 5; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
 
       updated = {
-        id: 'g-' + Date.now(),
+        id: generateUUID(),
         nom: guest.nom || '',
         prenom: guest.prenom || '',
         email: guest.email || '',
@@ -175,7 +209,11 @@ class WeddingDataStore {
     }
 
     if (supabase) {
-      await supabase.from('guests').upsert(updated as any);
+      try {
+        await supabase.from('guests').upsert(updated as any);
+      } catch (err) {
+        console.warn('Supabase saveGuest sync error:', err);
+      }
     }
     this.setItem('guests', guests);
     return updated;
@@ -192,11 +230,15 @@ class WeddingDataStore {
     target.updated_at = new Date().toISOString();
 
     if (supabase) {
-      await supabase.from('guests').update({
-        checked_in: true,
-        checked_in_at: target.checked_in_at,
-        checked_in_by: protocolName,
-      } as any).eq('id', target.id);
+      try {
+        await supabase.from('guests').update({
+          checked_in: true,
+          checked_in_at: target.checked_in_at,
+          checked_in_by: protocolName,
+        } as any).eq('id', target.id);
+      } catch (err) {
+        console.warn('Supabase checkInGuest sync error:', err);
+      }
     }
     this.setItem('guests', guests);
     return target;
@@ -206,7 +248,11 @@ class WeddingDataStore {
     const guests = await this.getGuests();
     const filtered = guests.filter(g => g.id !== guestId);
     if (supabase) {
-      await supabase.from('guests').delete().eq('id', guestId);
+      try {
+        await supabase.from('guests').delete().eq('id', guestId);
+      } catch (err) {
+        console.warn('Supabase deleteGuest sync error:', err);
+      }
     }
     this.setItem('guests', filtered);
   }
@@ -214,12 +260,16 @@ class WeddingDataStore {
   // --- PHOTOS & MODERATION ---
   async getPhotos(includePending: boolean = false): Promise<PhotoItem[]> {
     if (supabase) {
-      let query = supabase.from('photos').select('*').order('created_at', { ascending: false });
-      if (!includePending) {
-        query = query.eq('statut', 'valide');
+      try {
+        let query = supabase.from('photos').select('*').order('created_at', { ascending: false });
+        if (!includePending) {
+          query = query.eq('statut', 'valide');
+        }
+        const { data, error } = await query;
+        if (!error && data && data.length > 0) return data;
+      } catch (err) {
+        console.warn('Supabase getPhotos fallback to local data:', err);
       }
-      const { data, error } = await query;
-      if (!error && data) return data;
     }
     const photos = this.getItem('photos', INITIAL_PHOTOS);
     if (includePending) return photos;
@@ -229,7 +279,7 @@ class WeddingDataStore {
   async addPhoto(photo: Omit<PhotoItem, 'id' | 'created_at' | 'likes_count'>): Promise<PhotoItem> {
     const current = this.getItem('photos', INITIAL_PHOTOS);
     const newPhoto: PhotoItem = {
-      id: 'p-' + Date.now(),
+      id: generateUUID(),
       url: photo.url,
       storage_path: photo.storage_path,
       uploaded_by: photo.uploaded_by || 'Invité Anonyme',
@@ -242,7 +292,11 @@ class WeddingDataStore {
     current.unshift(newPhoto);
 
     if (supabase) {
-      await supabase.from('photos').insert(newPhoto as any);
+      try {
+        await supabase.from('photos').insert(newPhoto as any);
+      } catch (err) {
+        console.warn('Supabase addPhoto sync error:', err);
+      }
     }
     this.setItem('photos', current);
     return newPhoto;
@@ -254,7 +308,11 @@ class WeddingDataStore {
     if (target) {
       target.statut = statut;
       if (supabase) {
-        await supabase.from('photos').update({ statut } as any).eq('id', photoId);
+        try {
+          await supabase.from('photos').update({ statut } as any).eq('id', photoId);
+        } catch (err) {
+          console.warn('Supabase updatePhotoStatus sync error:', err);
+        }
       }
       this.setItem('photos', photos);
     }
@@ -263,8 +321,12 @@ class WeddingDataStore {
   // --- GUESTBOOK ---
   async getGuestbook(): Promise<GuestbookItem[]> {
     if (supabase) {
-      const { data, error } = await supabase.from('guestbook').select('*').order('created_at', { ascending: false });
-      if (!error && data && data.length) return data;
+      try {
+        const { data, error } = await supabase.from('guestbook').select('*').order('created_at', { ascending: false });
+        if (!error && data && data.length > 0) return data;
+      } catch (err) {
+        console.warn('Supabase getGuestbook fallback to local data:', err);
+      }
     }
     return this.getItem('guestbook', INITIAL_GUESTBOOK);
   }
@@ -272,7 +334,7 @@ class WeddingDataStore {
   async addGuestbookEntry(entry: Omit<GuestbookItem, 'id' | 'created_at' | 'is_pinned'>): Promise<GuestbookItem> {
     const current = await this.getGuestbook();
     const newEntry: GuestbookItem = {
-      id: 'b-' + Date.now(),
+      id: generateUUID(),
       guest_name: entry.guest_name,
       email: entry.email,
       message: entry.message,
@@ -283,7 +345,11 @@ class WeddingDataStore {
     current.unshift(newEntry);
 
     if (supabase) {
-      await supabase.from('guestbook').insert(newEntry as any);
+      try {
+        await supabase.from('guestbook').insert(newEntry as any);
+      } catch (err) {
+        console.warn('Supabase addGuestbookEntry sync error:', err);
+      }
     }
     this.setItem('guestbook', current);
     return newEntry;
@@ -292,8 +358,12 @@ class WeddingDataStore {
   // --- KANBAN TASKS ---
   async getTasks(): Promise<ProjectTaskItem[]> {
     if (supabase) {
-      const { data, error } = await supabase.from('project_tasks').select('*').order('ordre', { ascending: true });
-      if (!error && data && data.length) return data;
+      try {
+        const { data, error } = await supabase.from('project_tasks').select('*').order('ordre', { ascending: true });
+        if (!error && data && data.length > 0) return data;
+      } catch (err) {
+        console.warn('Supabase getTasks fallback to local data:', err);
+      }
     }
     return this.getItem('project_tasks', INITIAL_TASKS);
   }
@@ -310,7 +380,7 @@ class WeddingDataStore {
       else tasks.push(updated);
     } else {
       updated = {
-        id: 'k-' + Date.now(),
+        id: generateUUID(),
         titre: task.titre || 'Nouvelle Tâche',
         description: task.description || '',
         assigne_a: task.assigne_a || 'Kevin',
@@ -324,7 +394,11 @@ class WeddingDataStore {
     }
 
     if (supabase) {
-      await supabase.from('project_tasks').upsert(updated as any);
+      try {
+        await supabase.from('project_tasks').upsert(updated as any);
+      } catch (err) {
+        console.warn('Supabase saveTask sync error:', err);
+      }
     }
     this.setItem('project_tasks', tasks);
     return updated;
@@ -334,20 +408,32 @@ class WeddingDataStore {
     const tasks = await this.getTasks();
     const filtered = tasks.filter(t => t.id !== taskId);
     if (supabase) {
-      await supabase.from('project_tasks').delete().eq('id', taskId);
+      try {
+        await supabase.from('project_tasks').delete().eq('id', taskId);
+      } catch (err) {
+        console.warn('Supabase deleteTask sync error:', err);
+      }
     }
     this.setItem('project_tasks', filtered);
   }
 
   // --- REMINDERS LOG ---
   async getReminders(): Promise<ReminderLogItem[]> {
+    if (supabase) {
+      try {
+        const { data, error } = await supabase.from('reminders_log').select('*').order('sent_at', { ascending: false });
+        if (!error && data && data.length > 0) return data;
+      } catch (err) {
+        console.warn('Supabase getReminders fallback to local data:', err);
+      }
+    }
     return this.getItem('reminders_log', INITIAL_REMINDERS);
   }
 
   async sendReminder(guestId: string, channel: 'email' | 'sms', guestName: string): Promise<ReminderLogItem> {
     const logs = await this.getReminders();
     const newLog: ReminderLogItem = {
-      id: 'r-' + Date.now(),
+      id: generateUUID(),
       guest_id: guestId,
       guest_name: guestName,
       channel,
@@ -356,6 +442,14 @@ class WeddingDataStore {
       sent_at: new Date().toISOString(),
     };
     logs.unshift(newLog);
+
+    if (supabase) {
+      try {
+        await supabase.from('reminders_log').insert(newLog as any);
+      } catch (err) {
+        console.warn('Supabase sendReminder sync error:', err);
+      }
+    }
     this.setItem('reminders_log', logs);
     return newLog;
   }

@@ -31,6 +31,11 @@ export const QrScannerCamera: React.FC = () => {
 
   useEffect(() => {
     weddingStore.getTables().then(setTables);
+    return () => {
+      if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
+        html5QrCodeRef.current.stop().catch(() => {});
+      }
+    };
   }, []);
 
   const handleProcessCode = async (decodedText: string) => {

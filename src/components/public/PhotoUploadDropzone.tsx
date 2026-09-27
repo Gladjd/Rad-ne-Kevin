@@ -39,12 +39,22 @@ export const PhotoUploadDropzone: React.FC<PhotoUploadDropzoneProps> = ({ onPhot
 
     setIsUploading(true);
     try {
-      // In production with Supabase Storage, upload the file bytes.
-      // With fallback or direct url, convert to local or remote url.
-      const simulatedUrl = previewUrl || 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80';
+      let finalPhotoUrl = previewUrl || 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80';
+
+      if (file) {
+        // Read as persistent Base64 Data URL so it stays accessible across sessions & tabs
+        finalPhotoUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            resolve(typeof reader.result === 'string' ? reader.result : finalPhotoUrl);
+          };
+          reader.onerror = () => resolve(finalPhotoUrl);
+          reader.readAsDataURL(file);
+        });
+      }
 
       await weddingStore.addPhoto({
-        url: simulatedUrl,
+        url: finalPhotoUrl,
         uploaded_by: authorName.trim() || 'Invité Anonyme',
         caption: caption.trim() || undefined,
         event_id: eventId,
@@ -54,7 +64,7 @@ export const PhotoUploadDropzone: React.FC<PhotoUploadDropzoneProps> = ({ onPhot
       setUploadSuccess(true);
       if (onPhotoUploaded) onPhotoUploaded();
 
-      // Reset after 3 seconds
+      // Reset form
       setTimeout(() => {
         setFile(null);
         setPreviewUrl(null);
@@ -69,6 +79,9 @@ export const PhotoUploadDropzone: React.FC<PhotoUploadDropzoneProps> = ({ onPhot
   };
 
   const clearSelection = () => {
+    if (previewUrl && previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previewUrl);
+    }
     setFile(null);
     setPreviewUrl(null);
   };
