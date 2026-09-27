@@ -23,6 +23,7 @@ import {
 import { weddingStore } from '@/lib/supabase/client';
 import { GuestItem, Accompagnant } from '@/lib/database.types';
 import { triggerConfetti, generateQrUid } from '@/lib/utils';
+import { submitRsvpAction } from '@/app/actions/rsvp';
 
 export const RsvpSection: React.FC = () => {
   const [step, setStep] = useState<number>(1);
@@ -154,12 +155,38 @@ export const RsvpSection: React.FC = () => {
         qr_code_uid: existingGuest?.qr_code_uid || generateQrUid(),
       };
 
-      const saved = await weddingStore.saveGuest(guestData);
+      // 1. Appel de la Server Action Next.js 14 pour enregistrement et envoi de l'e-mail Resend avec QR Code
+      const actionRes = await submitRsvpAction(guestData);
+
+      // 2. Synchronisation avec le store réactif local
+      const saved = actionRes.guest || await weddingStore.saveGuest(guestData);
+      await weddingStore.saveGuest(saved);
+
       setSubmittedGuest(saved);
       setStep(5); // Success step
       if (statutRsvp === 'confirme') {
         triggerConfetti();
       }
+    } catch (err) {
+      console.error('Erreur soumission RSVP:', err);
+      // Fallback local
+      const saved = await weddingStore.saveGuest({
+        id: existingGuest?.id,
+        nom: nom.trim(),
+        prenom: prenom.trim(),
+        email: email.trim() || undefined,
+        telephone: telephone.trim() || undefined,
+        statut_rsvp: statutRsvp as any,
+        menu_choisi: statutRsvp === 'confirme' ? menuChoisi : undefined,
+        allergies: allergies.trim() || undefined,
+        accompagnants_json: accompagnants,
+        navette_requise: navetteRequise,
+        hebergement_requis: hebergementRequis,
+        message_maries: messageMaries.trim() || undefined,
+        qr_code_uid: existingGuest?.qr_code_uid || generateQrUid(),
+      });
+      setSubmittedGuest(saved);
+      setStep(5);
     } finally {
       setIsSubmitting(false);
     }

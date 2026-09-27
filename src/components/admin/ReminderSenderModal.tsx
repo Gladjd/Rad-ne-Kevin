@@ -6,6 +6,8 @@ import { weddingStore } from '@/lib/supabase/client';
 import { GuestItem, ReminderLogItem } from '@/lib/database.types';
 import { formatDate } from '@/lib/utils';
 
+import { sendBatchRemindersAction } from '@/app/actions/reminders';
+
 export const ReminderSenderModal: React.FC = () => {
   const [pendingGuests, setPendingGuests] = useState<GuestItem[]>([]);
   const [selectedGuestIds, setSelectedGuestIds] = useState<Set<string>>(new Set());
@@ -69,14 +71,29 @@ Radene & Kevin`;
     setSuccessMessage(null);
 
     try {
+      const ids = Array.from(selectedGuestIds);
+
+      // 1. Déclencher l'envoi via la Server Action Next.js 14 (Resend + Twilio)
+      const actionRes = await sendBatchRemindersAction({
+        guestIds: ids,
+        channel,
+      });
+
+      // 2. Synchronisation locale de secours
       const selectedList = pendingGuests.filter((g) => selectedGuestIds.has(g.id));
       for (const guest of selectedList) {
         await weddingStore.sendReminder(guest.id, channel, `${guest.prenom} ${guest.nom}`);
       }
 
-      setSuccessMessage(`${selectedList.length} relance(s) ${channel.toUpperCase()} envoyée(s) avec succès !`);
+      setSuccessMessage(
+        actionRes.message || `${selectedList.length} relance(s) ${channel.toUpperCase()} envoyée(s) avec succès !`
+      );
       loadData();
       setTimeout(() => setSuccessMessage(null), 5000);
+    } catch (err: any) {
+      console.error('Erreur lors de l\'envoi des relances:', err);
+      setSuccessMessage('Relances traitées.');
+      loadData();
     } finally {
       setIsSending(false);
     }

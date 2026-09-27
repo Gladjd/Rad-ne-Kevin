@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import {
   Camera,
@@ -14,58 +14,204 @@ import {
   Sparkles,
   MapPin,
   Volume2,
+  VolumeX,
+  Clock,
+  UserCheck,
+  Flame,
+  Check,
+  XCircle,
+  HelpCircle,
 } from 'lucide-react';
 import { weddingStore } from '@/lib/supabase/client';
 import { GuestItem, TableItem } from '@/lib/database.types';
 import { triggerConfetti, formatDate } from '@/lib/utils';
+import { checkInGuestAction, CheckInResult } from '@/app/actions/scanner';
+
+/**
+ * Web Audio API : Générateur de sons synthétisés sans fichier audio externe
+ */
+function playAudioFeedback(type: 'success' | 'warning' | 'error') {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    const ctx = new AudioContextClass();
+
+    if (type === 'success') {
+      // Accord majeur montant harmonieux (Do5 -> Mi5 -> Sol5)
+      const notes = [523.25, 659.25, 783.99];
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.08);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime + i * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.08 + 0.3);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + i * 0.08);
+        osc.stop(ctx.currentTime + i * 0.08 + 0.35);
+      });
+    } else if (type === 'warning') {
+      // Double bip d'attention (invité déjà pointé)
+      [0, 0.15].forEach((delay) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime + delay);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.1);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + delay);
+        osc.stop(ctx.currentTime + delay + 0.12);
+      });
+    } else {
+      // Son d'erreur grave
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(220, ctx.currentTime);
+      gain.gain.setValueAtTime(0.25, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.35);
+    }
+  } catch (e) {
+    // Audio context may be blocked by browser policy before first interaction
+  }
+}
 
 export const QrScannerCamera: React.FC = () => {
   const [scanning, setScanning] = useState(false);
   const [manualCode, setManualCode] = useState('');
-  const [scannedResult, setScannedResult] = useState<GuestItem | null>(null);
+  const [lastResult, setLastResult] = useState<CheckInResult | null>(null);
   const [tables, setTables] = useState<TableItem[]>([]);
-  const [checkInSuccess, setCheckInSuccess] = useState(false);
+  const [guests, setGuests] = useState<GuestItem[]>([]);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [autoResetTimer, setAutoResetTimer] = useState<number>(0);
+  const [protocolStaffName, setProtocolStaffName] = useState('Protocole Entrée');
 
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
+  const isProcessingRef = useRef<boolean>(false);
+  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const loadData = useCallback(async () => {
+    const [tList, gList] = await Promise.all([
+      weddingStore.getTables(),
+      weddingStore.getGuests(),
+    ]);
+    setTables(tList);
+    setGuests(gList);
+  }, []);
 
   useEffect(() => {
-    weddingStore.getTables().then(setTables);
+    loadData();
+    window.addEventListener('wedding_data_changed', loadData);
     return () => {
+      window.removeEventListener('wedding_data_changed', loadData);
       if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
         html5QrCodeRef.current.stop().catch(() => {});
       }
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     };
+  }, [loadData]);
+
+  // Statistics
+  const totalGuests = guests.reduce((acc, g) => acc + (g.nombre_invites || 1), 0);
+  const checkedInGuests = guests.filter((g) => g.checked_in).reduce((acc, g) => acc + (g.nombre_invites || 1), 0);
+  const remainingGuests = Math.max(0, totalGuests - checkedInGuests);
+  const arrivalPercent = totalGuests > 0 ? Math.round((checkedInGuests / totalGuests) * 100) : 0;
+
+  // Auto-reset countdown logic
+  const startAutoResetCountdown = useCallback(() => {
+    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    let secondsLeft = 4;
+    setAutoResetTimer(secondsLeft);
+
+    timerIntervalRef.current = setInterval(() => {
+      secondsLeft -= 1;
+      setAutoResetTimer(secondsLeft);
+      if (secondsLeft <= 0) {
+        if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+        setLastResult(null);
+        isProcessingRef.current = false;
+        startScanner();
+      }
+    }, 1000);
   }, []);
 
   const handleProcessCode = async (decodedText: string) => {
     const cleanCode = decodedText.trim();
-    if (!cleanCode) return;
+    if (!cleanCode || isProcessingRef.current) return;
+    isProcessingRef.current = true;
 
     try {
-      const guest = await weddingStore.findGuestByQuery(cleanCode);
-      if (guest) {
-        setScannedResult(guest);
-        // Automatically check-in
-        const updated = await weddingStore.checkInGuest(guest.id, 'Protocole Scanner');
-        if (updated) {
-          setScannedResult(updated);
-          setCheckInSuccess(true);
-          triggerConfetti();
+      // 1. Tenter l'appel via la Server Action Next.js 14
+      let result = await checkInGuestAction(cleanCode, protocolStaffName);
+
+      // 2. Si le serveur Supabase n'est pas configuré en ligne, basculer sur le store réactif local
+      if (!result.success && result.status === 'ERROR') {
+        const localGuest = await weddingStore.findGuestByQuery(cleanCode);
+        if (localGuest) {
+          const wasAlready = localGuest.checked_in;
+          const updated = await weddingStore.checkInGuest(localGuest.id, protocolStaffName);
+          const table = tables.find((t) => t.id === localGuest.table_id) || null;
+
+          result = {
+            success: true,
+            status: wasAlready ? 'ALREADY_CHECKED_IN' : 'SUCCESS',
+            message: wasAlready
+              ? `Invité déjà pointé précédemment.`
+              : `Bienvenue ${localGuest.prenom} ${localGuest.nom} ! Pointage validé avec succès.`,
+            guest: updated || localGuest,
+            table,
+          };
+        } else {
+          result = {
+            success: false,
+            status: 'NOT_FOUND',
+            message: `Aucun invité trouvé pour le code « ${cleanCode} ».`,
+          };
         }
-      } else {
-        alert(`Aucun invité trouvé pour le code : ${cleanCode}`);
       }
-    } catch (err) {
-      console.error('Error processing QR code', err);
+
+      setLastResult(result);
+      loadData();
+
+      // Audio & Visual Effects
+      if (result.status === 'SUCCESS') {
+        if (soundEnabled) playAudioFeedback('success');
+        triggerConfetti();
+      } else if (result.status === 'ALREADY_CHECKED_IN') {
+        if (soundEnabled) playAudioFeedback('warning');
+      } else {
+        if (soundEnabled) playAudioFeedback('error');
+      }
+
+      // Arrêter le flux caméra pendant l'affichage et lancer le décompte de reprise
+      await stopScanner();
+      startAutoResetCountdown();
+    } catch (err: any) {
+      console.error('Erreur traitement scan:', err);
+      setLastResult({
+        success: false,
+        status: 'ERROR',
+        message: err?.message || 'Erreur lors du traitement du QR Code.',
+      });
+      if (soundEnabled) playAudioFeedback('error');
+      startAutoResetCountdown();
     }
   };
 
   const startScanner = async () => {
     setCameraError(null);
     setScanning(true);
-    setScannedResult(null);
-    setCheckInSuccess(false);
+    isProcessingRef.current = false;
 
     try {
       if (!html5QrCodeRef.current) {
@@ -75,21 +221,20 @@ export const QrScannerCamera: React.FC = () => {
       await html5QrCodeRef.current.start(
         { facingMode: 'environment' },
         {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
+          fps: 15,
+          qrbox: { width: 260, height: 260 },
           aspectRatio: 1.0,
         },
         (decodedText) => {
           handleProcessCode(decodedText);
-          stopScanner();
         },
-        (errorMessage) => {
-          // scanning frame error (ignore continuous scan logs)
+        () => {
+          // Continuous frame scan error (silenced)
         }
       );
     } catch (err: any) {
-      console.error('Camera start failed', err);
-      setCameraError('Accès caméra indisponible ou refusé. Vous pouvez utiliser la saisie manuelle.');
+      console.warn('Camera start issue:', err);
+      setCameraError('Accès caméra indisponible ou refusé. Vous pouvez utiliser la saisie manuelle ci-dessous.');
       setScanning(false);
     }
   };
@@ -100,7 +245,7 @@ export const QrScannerCamera: React.FC = () => {
         await html5QrCodeRef.current.stop();
         html5QrCodeRef.current.clear();
       } catch (e) {
-        console.error('Error stopping camera', e);
+        console.warn('Stop camera error:', e);
       }
     }
     setScanning(false);
@@ -108,74 +253,136 @@ export const QrScannerCamera: React.FC = () => {
 
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!manualCode.trim()) return;
     handleProcessCode(manualCode);
     setManualCode('');
   };
 
-  const getTable = (tableId?: string | null) => {
-    if (!tableId) return null;
-    return tables.find((t) => t.id === tableId) || null;
+  const menuDisplayMap: Record<string, string> = {
+    viande_boeuf_rossini: '🥩 Filet de Bœuf Rossini',
+    poisson_bar_sauvage: '🐟 Dos de Bar Sauvage',
+    vegetarien_truffe: '🌱 Risotto Morilles & Truffe',
+    menu_enfant: '🧒 Menu Enfant',
   };
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
-      {/* Scanner Card */}
-      <div className="glass-card-gold rounded-3xl p-6 sm:p-8 shadow-gold text-center">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <QrCode className="w-5 h-5 text-gold-600" />
-            <h2 className="font-serif-luxury text-xl font-bold text-zinc-900 dark:text-zinc-100">
-              Scanner Caméra Jour J
-            </h2>
+    <div className="space-y-6 max-w-3xl mx-auto">
+      {/* 1. Top Real-time Reception Stats & Receptionist Config */}
+      <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-gold-200/70 dark:border-zinc-800 shadow-gold">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4 border-b border-gold-100 dark:border-zinc-800">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gold-500/15 text-gold-700 dark:text-gold-300 flex items-center justify-center font-bold">
+              <QrCode className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="font-serif-luxury text-xl font-bold text-zinc-900 dark:text-zinc-100">
+                Protocole d'Accueil Jour J
+              </h2>
+              <p className="text-xs text-zinc-500">
+                Poste actif : <span className="font-semibold text-gold-700">{protocolStaffName}</span>
+              </p>
+            </div>
           </div>
 
-          <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-            <span>Mode Accueil Direct</span>
-          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSoundEnabled(!soundEnabled)}
+              className={`p-2 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                soundEnabled
+                  ? 'border-gold-300 bg-gold-50 text-gold-800'
+                  : 'border-zinc-200 text-zinc-400 bg-zinc-50'
+              }`}
+              title={soundEnabled ? 'Retour sonore activé' : 'Retour sonore désactivé'}
+            >
+              {soundEnabled ? <Volume2 className="w-4 h-4 text-gold-600" /> : <VolumeX className="w-4 h-4" />}
+              <span>{soundEnabled ? 'Bip ON' : 'Muet'}</span>
+            </button>
+
+            <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-800 bg-emerald-100 px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+              <span>Scan Direct</span>
+            </span>
+          </div>
         </div>
 
-        {/* Video Box Container */}
-        <div className="relative rounded-3xl overflow-hidden bg-black/90 min-h-[280px] flex flex-col items-center justify-center p-4 border-2 border-gold-300">
+        {/* Live Metrics Grid */}
+        <div className="grid grid-cols-3 gap-3 pt-4 text-center">
+          <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/60">
+            <span className="text-[10px] uppercase font-bold text-zinc-400 block tracking-wider">Pointés Arrivés</span>
+            <span className="font-serif-luxury text-2xl sm:text-3xl font-bold text-emerald-600">
+              {checkedInGuests}
+            </span>
+            <span className="text-[10px] text-zinc-500 block">sur {totalGuests} prévus</span>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/60">
+            <span className="text-[10px] uppercase font-bold text-zinc-400 block tracking-wider">Restants</span>
+            <span className="font-serif-luxury text-2xl sm:text-3xl font-bold text-amber-600">
+              {remainingGuests}
+            </span>
+            <span className="text-[10px] text-zinc-500 block">personnes attendues</span>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-gold-50/70 dark:bg-zinc-800/60 border border-gold-200">
+            <span className="text-[10px] uppercase font-bold text-gold-700 block tracking-wider">Taux d'Arrivée</span>
+            <span className="font-serif-luxury text-2xl sm:text-3xl font-bold text-gold-800 dark:text-gold-300">
+              {arrivalPercent}%
+            </span>
+            <span className="text-[10px] text-gold-600 block">de la salle</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Interactive Camera Viewfinder Card */}
+      <div className="glass-card-gold rounded-3xl p-6 sm:p-8 shadow-gold text-center relative overflow-hidden">
+        {/* Camera Box */}
+        <div className="relative rounded-3xl overflow-hidden bg-black/95 min-h-[300px] sm:min-h-[340px] flex flex-col items-center justify-center p-4 border-2 border-gold-400 shadow-inner">
           <div id="qr-reader-container" className="w-full max-w-[320px] rounded-2xl overflow-hidden" />
 
-          {!scanning && (
-            <div className="text-center p-6 space-y-4">
-              <div className="w-16 h-16 rounded-full bg-gold-500/20 text-gold-400 mx-auto flex items-center justify-center">
+          {!scanning && !lastResult && (
+            <div className="text-center p-6 space-y-4 animate-in fade-in">
+              <div className="w-16 h-16 rounded-full bg-gold-500/20 text-gold-400 mx-auto flex items-center justify-center border border-gold-400/40">
                 <Camera className="w-8 h-8" />
               </div>
-              <p className="text-sm text-zinc-300 font-medium">
-                Pointez la caméra vers le QR Code de l'invité pour l'orienter instantanément.
-              </p>
+              <div>
+                <h3 className="font-serif-luxury text-lg font-bold text-white">
+                  Caméra prête pour le pointage
+                </h3>
+                <p className="text-xs text-zinc-300 mt-1 max-w-sm mx-auto">
+                  Pointez la caméra vers le Pass QR Code de l'invité pour l'orienter instantanément.
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={startScanner}
-                className="px-6 py-3 rounded-full bg-gold-500 hover:bg-gold-600 text-white font-bold text-xs uppercase tracking-widest shadow-gold transition-colors"
+                className="px-8 py-3.5 rounded-full bg-gradient-to-r from-gold-500 via-gold-600 to-gold-700 hover:from-gold-600 hover:to-gold-800 text-white font-bold text-xs uppercase tracking-widest shadow-gold hover:shadow-gold-glow transition-all active:scale-95"
               >
-                Activer la Caméra
+                Démarrer le Scanner Caméra
               </button>
             </div>
           )}
 
           {scanning && (
-            <button
-              type="button"
-              onClick={stopScanner}
-              className="mt-4 px-5 py-2 rounded-full bg-zinc-800 text-zinc-300 hover:text-white text-xs uppercase tracking-wider font-semibold"
-            >
-              Désactiver la Caméra
-            </button>
+            <div className="absolute bottom-4 z-20 flex gap-2">
+              <button
+                type="button"
+                onClick={stopScanner}
+                className="px-5 py-2 rounded-full bg-zinc-900/90 text-zinc-300 hover:text-white text-xs uppercase tracking-wider font-semibold border border-zinc-700"
+              >
+                Mettre en pause
+              </button>
+            </div>
           )}
 
           {cameraError && (
-            <div className="absolute inset-0 bg-zinc-900/90 p-6 flex flex-col items-center justify-center text-center space-y-2">
-              <AlertTriangle className="w-8 h-8 text-amber-400" />
-              <p className="text-xs text-zinc-200">{cameraError}</p>
+            <div className="absolute inset-0 bg-zinc-950/95 p-6 flex flex-col items-center justify-center text-center space-y-3 z-30">
+              <AlertTriangle className="w-10 h-10 text-amber-400" />
+              <p className="text-xs text-zinc-200 max-w-md">{cameraError}</p>
               <button
                 onClick={startScanner}
-                className="text-xs text-gold-400 underline pt-2"
+                className="px-5 py-2 rounded-full bg-gold-500 text-white text-xs font-semibold uppercase tracking-wider"
               >
-                Réessayer
+                Réessayer la caméra
               </button>
             </div>
           )}
@@ -184,16 +391,19 @@ export const QrScannerCamera: React.FC = () => {
         {/* Manual Fallback Input */}
         <div className="mt-6 pt-4 border-t border-gold-200/60">
           <form onSubmit={handleManualSubmit} className="flex gap-2">
-            <input
-              type="text"
-              value={manualCode}
-              onChange={(e) => setManualCode(e.target.value)}
-              placeholder="Code ou Nom (ex: RK-A8F29 ou Dupont)..."
-              className="flex-1 px-4 py-3 rounded-2xl bg-white dark:bg-zinc-800 border border-gold-300 text-xs focus:outline-none focus:ring-2 focus:ring-gold-500"
-            />
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-3.5 w-4 h-4 text-zinc-400" />
+              <input
+                type="text"
+                value={manualCode}
+                onChange={(e) => setManualCode(e.target.value)}
+                placeholder="Saisie manuelle : Code UID (ex: RK-A8F29) ou Nom..."
+                className="w-full pl-11 pr-4 py-3 rounded-2xl bg-white dark:bg-zinc-800 border border-gold-300 text-xs focus:outline-none focus:ring-2 focus:ring-gold-500"
+              />
+            </div>
             <button
               type="submit"
-              className="px-5 py-3 rounded-2xl bg-zinc-900 dark:bg-zinc-700 text-white font-semibold text-xs uppercase tracking-wider hover:bg-zinc-800 transition-colors"
+              className="px-6 py-3 rounded-2xl bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-700 text-white font-semibold text-xs uppercase tracking-wider transition-colors shadow-sm"
             >
               Valider
             </button>
@@ -201,83 +411,157 @@ export const QrScannerCamera: React.FC = () => {
         </div>
       </div>
 
-      {/* Result Card (When scanned) */}
-      {scannedResult && (
-        <div className="rounded-3xl p-6 sm:p-8 bg-white dark:bg-zinc-900 border-2 border-gold-500 shadow-gold-glow animate-in zoom-in-95 duration-300">
-          <div className="flex items-center justify-between pb-4 border-b border-gold-200/60">
+      {/* 3. Live Result Card (Shown immediately upon scan) */}
+      {lastResult && (
+        <div
+          className={`rounded-3xl p-6 sm:p-8 border-2 shadow-2xl transition-all animate-in zoom-in-95 duration-300 relative overflow-hidden ${
+            lastResult.status === 'SUCCESS'
+              ? 'bg-gradient-to-b from-emerald-50/90 to-white dark:from-emerald-950/40 dark:to-zinc-900 border-emerald-500 shadow-emerald-500/20'
+              : lastResult.status === 'ALREADY_CHECKED_IN'
+              ? 'bg-gradient-to-b from-amber-50/90 to-white dark:from-amber-950/40 dark:to-zinc-900 border-amber-500 shadow-amber-500/20'
+              : 'bg-gradient-to-b from-rose-50/90 to-white dark:from-rose-950/40 dark:to-zinc-900 border-rose-500 shadow-rose-500/20'
+          }`}
+        >
+          {/* Status Header Banner */}
+          <div className="flex items-center justify-between pb-4 border-b border-zinc-200 dark:border-zinc-800">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-6 h-6 text-emerald-600" />
-              <span className="text-xs font-bold uppercase tracking-widest text-emerald-700">
-                Pointage Confirmé • Bienvenue !
-              </span>
+              {lastResult.status === 'SUCCESS' && (
+                <>
+                  <CheckCircle2 className="w-7 h-7 text-emerald-600 animate-bounce" />
+                  <div>
+                    <span className="text-xs font-bold uppercase tracking-widest text-emerald-800 dark:text-emerald-300 block">
+                      Pointage Validé • Bienvenue !
+                    </span>
+                    <span className="text-[11px] text-emerald-600">Enregistré dans la base de données</span>
+                  </div>
+                </>
+              )}
+
+              {lastResult.status === 'ALREADY_CHECKED_IN' && (
+                <>
+                  <Clock className="w-7 h-7 text-amber-600" />
+                  <div>
+                    <span className="text-xs font-bold uppercase tracking-widest text-amber-800 dark:text-amber-300 block">
+                      Déjà Pointé Antérieurement ⚠️
+                    </span>
+                    <span className="text-[11px] text-amber-700">
+                      {lastResult.guest?.checked_in_at
+                        ? `Pointé à ${new Date(lastResult.guest.checked_in_at).toLocaleTimeString('fr-FR')}`
+                        : 'Déjà enregistré'}
+                    </span>
+                  </div>
+                </>
+              )}
+
+              {lastResult.status !== 'SUCCESS' && lastResult.status !== 'ALREADY_CHECKED_IN' && (
+                <>
+                  <XCircle className="w-7 h-7 text-rose-600" />
+                  <div>
+                    <span className="text-xs font-bold uppercase tracking-widest text-rose-800 dark:text-rose-300 block">
+                      Code Non Validé
+                    </span>
+                    <span className="text-[11px] text-rose-600">{lastResult.message}</span>
+                  </div>
+                </>
+              )}
             </div>
-            <span className="font-mono text-xs font-bold text-zinc-500">
-              {scannedResult.qr_code_uid}
-            </span>
+
+            {lastResult.guest && (
+              <span className="font-mono text-xs font-bold bg-black/5 dark:bg-white/10 px-3 py-1 rounded-full text-zinc-700 dark:text-zinc-300">
+                {lastResult.guest.qr_code_uid}
+              </span>
+            )}
           </div>
 
-          <div className="py-6 text-center space-y-4">
-            <h3 className="font-serif-luxury text-3xl sm:text-4xl font-bold text-zinc-900 dark:text-zinc-100">
-              {scannedResult.prenom} {scannedResult.nom}
-            </h3>
+          {/* Guest & Placement Details */}
+          {lastResult.guest && (
+            <div className="py-6 text-center space-y-5">
+              <div>
+                <h3 className="font-serif-luxury text-3xl sm:text-4xl font-bold text-zinc-900 dark:text-zinc-50">
+                  {lastResult.guest.prenom} {lastResult.guest.nom}
+                </h3>
+                <p className="text-xs text-zinc-500 mt-1">
+                  Invitation pour {lastResult.guest.nombre_invites} personne{lastResult.guest.nombre_invites > 1 ? 's' : ''}
+                </p>
+              </div>
 
-            {/* Table Badge */}
-            {scannedResult.table_id && getTable(scannedResult.table_id) ? (
-              <div className="inline-block px-6 py-3 rounded-2xl bg-gradient-to-r from-gold-500 to-gold-600 text-white shadow-gold">
-                <span className="text-[10px] uppercase font-bold tracking-widest block opacity-90">
+              {/* High-visibility Table Badge */}
+              <div className="inline-block p-5 rounded-3xl bg-gradient-to-r from-gold-500 via-gold-600 to-gold-700 text-white shadow-gold max-w-sm w-full mx-auto">
+                <span className="text-[11px] uppercase font-bold tracking-widest block opacity-90 mb-1">
                   Orientation Table
                 </span>
-                <span className="font-serif-luxury text-2xl font-bold">
-                  {getTable(scannedResult.table_id)?.nom_numero}
+                <span className="font-serif-luxury text-3xl font-bold block">
+                  {lastResult.table?.nom_numero || 'Table Non Assignée'}
                 </span>
-                <span className="text-xs block opacity-90 mt-0.5">
-                  Zone : {getTable(scannedResult.table_id)?.zone || 'Salle Principale'}
-                </span>
-              </div>
-            ) : (
-              <div className="p-3 rounded-xl bg-amber-50 text-amber-800 text-xs font-semibold">
-                Table non assignée
-              </div>
-            )}
-
-            {/* Accompagnants details */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-left text-xs">
-              <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200">
-                <span className="font-bold block text-zinc-500 mb-1">Nombre d'entrées</span>
-                <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
-                  {scannedResult.nombre_invites} personne{scannedResult.nombre_invites > 1 ? 's' : ''}
-                </span>
-                {scannedResult.accompagnants_json && scannedResult.accompagnants_json.length > 0 && (
-                  <p className="text-zinc-500 mt-1">
-                    Accompagnant(s) : {scannedResult.accompagnants_json.map((a) => `${a.prenom} ${a.nom}`).join(', ')}
-                  </p>
-                )}
+                <div className="flex items-center justify-center gap-2 text-xs opacity-90 mt-1">
+                  <MapPin className="w-3.5 h-3.5" />
+                  <span>Zone : {lastResult.table?.zone || 'Salle Principale'}</span>
+                </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200">
-                <span className="font-bold block text-zinc-500 mb-1">Menu & Allergies</span>
-                <span className="font-medium text-zinc-800 dark:text-zinc-200">
-                  {scannedResult.menu_choisi?.replace(/_/g, ' ') || 'Standard'}
-                </span>
-                {scannedResult.allergies && (
-                  <p className="text-rose-600 font-bold mt-1">
-                    ⚠️ Allergie : {scannedResult.allergies}
-                  </p>
-                )}
+              {/* Accompagnants & Menu Details Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left text-xs pt-2">
+                <div className="p-4 rounded-2xl bg-white/80 dark:bg-zinc-800/80 border border-zinc-200">
+                  <span className="font-bold text-zinc-500 uppercase text-[10px] block mb-1">
+                    Composition du Groupe
+                  </span>
+                  <div className="font-semibold text-zinc-900 dark:text-zinc-100">
+                    {lastResult.guest.prenom} {lastResult.guest.nom}
+                  </div>
+                  {lastResult.guest.accompagnants_json && lastResult.guest.accompagnants_json.length > 0 ? (
+                    <div className="mt-1 space-y-0.5 text-zinc-600 dark:text-zinc-300">
+                      {lastResult.guest.accompagnants_json.map((acc, i) => (
+                        <div key={i} className="text-[11px] flex items-center gap-1">
+                          <span>+</span>
+                          <span className="font-medium">{acc.prenom} {acc.nom}</span>
+                          <span className="text-zinc-400">({acc.menu || 'standard'})</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-[11px] text-zinc-400 mt-0.5 block">Invité seul</span>
+                  )}
+                </div>
+
+                <div className="p-4 rounded-2xl bg-white/80 dark:bg-zinc-800/80 border border-zinc-200">
+                  <span className="font-bold text-zinc-500 uppercase text-[10px] block mb-1">
+                    Régimes & Allergies
+                  </span>
+                  <div className="font-medium text-zinc-800 dark:text-zinc-200">
+                    {menuDisplayMap[lastResult.guest.menu_choisi || ''] || lastResult.guest.menu_choisi || 'Menu Standard'}
+                  </div>
+                  {lastResult.guest.allergies ? (
+                    <div className="mt-2 p-2 rounded-xl bg-rose-50 text-rose-800 font-bold text-xs border border-rose-200 flex items-center gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-rose-600" />
+                      <span>Attention : {lastResult.guest.allergies}</span>
+                    </div>
+                  ) : (
+                    <span className="text-[11px] text-zinc-400 mt-1 block">Aucune allergie signalée</span>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
-          <div className="pt-4 border-t border-gold-200 flex justify-end">
+          {/* Auto-reset Progress Countdown & Next Scan Button */}
+          <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-xs text-zinc-500 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-gold-500 animate-ping" />
+              <span>
+                Reprise automatique du scan dans <strong>{autoResetTimer}s</strong>...
+              </span>
+            </div>
+
             <button
               onClick={() => {
-                setScannedResult(null);
-                setCheckInSuccess(false);
+                if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+                setLastResult(null);
+                isProcessingRef.current = false;
                 startScanner();
               }}
-              className="px-6 py-2.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-white text-xs uppercase tracking-wider font-semibold"
+              className="px-6 py-2.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold uppercase tracking-wider shadow-sm transition-colors"
             >
-              Invité suivant →
+              Scanner Invité Suivant Immédiatement →
             </button>
           </div>
         </div>

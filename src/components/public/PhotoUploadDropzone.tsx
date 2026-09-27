@@ -5,6 +5,8 @@ import { useDropzone } from 'react-dropzone';
 import { UploadCloud, Camera, Image as ImageIcon, CheckCircle, Sparkles, X } from 'lucide-react';
 import { weddingStore } from '@/lib/supabase/client';
 
+import { uploadPhotoAction } from '@/app/actions/photos';
+
 interface PhotoUploadDropzoneProps {
   onPhotoUploaded?: () => void;
 }
@@ -39,27 +41,29 @@ export const PhotoUploadDropzone: React.FC<PhotoUploadDropzoneProps> = ({ onPhot
 
     setIsUploading(true);
     try {
-      let finalPhotoUrl = previewUrl || 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80';
-
       if (file) {
-        // Read as persistent Base64 Data URL so it stays accessible across sessions & tabs
-        finalPhotoUrl = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            resolve(typeof reader.result === 'string' ? reader.result : finalPhotoUrl);
-          };
-          reader.onerror = () => resolve(finalPhotoUrl);
-          reader.readAsDataURL(file);
+        // 1. Appel de la Server Action Next.js 14 pour téléversement direct dans le bucket 'photos_mariage'
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('uploaded_by', authorName.trim() || 'Invité Anonyme');
+        if (caption.trim()) formData.append('caption', caption.trim());
+        formData.append('event_id', eventId);
+
+        const actionRes = await uploadPhotoAction(formData);
+
+        if (actionRes.photo) {
+          await weddingStore.addPhoto(actionRes.photo);
+        }
+      } else {
+        // Fallback sans fichier brut
+        await weddingStore.addPhoto({
+          url: previewUrl || 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80',
+          uploaded_by: authorName.trim() || 'Invité Anonyme',
+          caption: caption.trim() || undefined,
+          event_id: eventId,
+          statut: 'en_attente',
         });
       }
-
-      await weddingStore.addPhoto({
-        url: finalPhotoUrl,
-        uploaded_by: authorName.trim() || 'Invité Anonyme',
-        caption: caption.trim() || undefined,
-        event_id: eventId,
-        statut: 'en_attente', // Stays pending until approved in back-office moderation queue!
-      });
 
       setUploadSuccess(true);
       if (onPhotoUploaded) onPhotoUploaded();
@@ -77,7 +81,6 @@ export const PhotoUploadDropzone: React.FC<PhotoUploadDropzoneProps> = ({ onPhot
       setIsUploading(false);
     }
   };
-
   const clearSelection = () => {
     if (previewUrl && previewUrl.startsWith('blob:')) {
       URL.revokeObjectURL(previewUrl);
