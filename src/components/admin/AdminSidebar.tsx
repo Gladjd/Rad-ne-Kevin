@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   QrCode,
@@ -14,43 +14,96 @@ import {
   LogOut,
   ExternalLink,
   Sparkles,
+  ShieldCheck,
+  Smartphone,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase, isSupabaseConfigured, weddingStore } from '@/lib/supabase/client';
+import { toast } from 'sonner';
 
 interface AdminSidebarProps {
+  userRole?: 'ADMIN' | 'PROTOCOLE';
   onLogout?: () => void;
 }
 
-export const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
+export const AdminSidebar: React.FC<AdminSidebarProps> = ({ userRole = 'ADMIN', onLogout }) => {
   const pathname = usePathname();
+  const router = useRouter();
 
-  const links = [
-    { name: 'Vue d\'Ensemble', href: '/admin', icon: LayoutDashboard },
-    { name: 'Scanner Jour J (Protocole)', href: '/admin/scanner', icon: QrCode, isHighlight: true },
-    { name: 'Gestion des Invités', href: '/admin/invites', icon: Users },
-    { name: 'Plan de Table 2D', href: '/admin/plan-de-table', icon: Grid },
-    { name: 'Modération Photos', href: '/admin/moderation', icon: ImageIcon },
-    { name: 'Relances Email / SMS', href: '/admin/relances', icon: Mail },
-    { name: 'Kanban Organisation', href: '/admin/kanban', icon: Kanban },
+  const handleSignOut = async () => {
+    if (supabase && isSupabaseConfigured) {
+      await supabase.auth.signOut();
+    }
+    if (onLogout) {
+      onLogout();
+    } else {
+      router.push('/admin/login');
+      router.refresh();
+    }
+    toast.info('Vous avez été déconnecté.');
+  };
+
+  const allLinks = [
+    { name: 'Vue d’Ensemble', href: '/admin', icon: LayoutDashboard, adminOnly: true },
+    { name: 'Scanner Jour J (Protocole)', href: '/admin/scanner', icon: QrCode, isHighlight: true, adminOnly: false },
+    { name: 'Gestion des Invités', href: '/admin/invites', icon: Users, adminOnly: true },
+    { name: 'Plan de Table 2D', href: '/admin/plan-de-table', icon: Grid, adminOnly: true },
+    { name: 'Modération Photos', href: '/admin/moderation', icon: ImageIcon, adminOnly: true },
+    { name: 'Relances Email / SMS', href: '/admin/relances', icon: Mail, adminOnly: true },
+    { name: 'Kanban Organisation', href: '/admin/kanban', icon: Kanban, adminOnly: true },
   ];
 
+  const visibleLinks = userRole === 'PROTOCOLE'
+    ? allLinks.filter((l) => !l.adminOnly)
+    : allLinks;
+
   return (
-    <aside className="w-64 bg-zinc-950 text-white flex flex-col border-r border-gold-900/40 shrink-0 h-screen sticky top-0">
-      {/* Brand Header */}
+    <aside className="w-64 bg-royal-950 text-white flex flex-col border-r border-gold-500/30 shrink-0 h-screen sticky top-0 shadow-xl">
+      {/* Brand Header with Monogram */}
       <div className="p-6 border-b border-zinc-800/80">
-        <Link href="/" className="group block">
-          <span className="font-script-calligraphy text-3xl text-gold-400 block group-hover:scale-105 transition-transform">
-            Radene & Kevin
-          </span>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 block mt-1">
-            Back-Office & Protocole
-          </span>
+        <Link href="/" className="group flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full p-0.5 border border-gold-400 shadow-sm bg-white shrink-0 group-hover:scale-105 transition-transform">
+            <img
+              src="/img/logo.png"
+              alt="Monogramme R & K"
+              className="w-full h-full object-contain"
+            />
+          </div>
+          <div>
+            <span className="font-serif-luxury text-lg font-bold text-white block">
+              Radène &amp; Kévin
+            </span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-gold-400 block">
+              {userRole === 'PROTOCOLE' ? 'Espace Protocole' : 'Administration'}
+            </span>
+          </div>
         </Link>
+
+        {/* Role Badge */}
+        <div className="mt-4 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-royal-900/90 border border-gold-400/40">
+          {userRole === 'PROTOCOLE' ? (
+            <>
+              <Smartphone className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <div className="text-[10px] leading-tight">
+                <span className="font-bold text-cyan-300 block uppercase">Rôle : Protocole</span>
+                <span className="text-zinc-400 text-[9px]">Accès Scanner uniquement</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <ShieldCheck className="w-3.5 h-3.5 text-gold-400 shrink-0" />
+              <div className="text-[10px] leading-tight">
+                <span className="font-bold text-gold-300 block uppercase">Rôle : Administrateur</span>
+                <span className="text-zinc-400 text-[9px]">Accès complet</span>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Nav List */}
       <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
-        {links.map((link) => {
+        {visibleLinks.map((link) => {
           const Icon = link.icon;
           const isActive = pathname === link.href;
 
@@ -61,10 +114,10 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
               className={cn(
                 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs uppercase tracking-wider font-semibold transition-all',
                 isActive
-                  ? 'bg-gradient-to-r from-gold-600 to-gold-700 text-white shadow-gold'
+                  ? 'bg-gradient-to-r from-gold-500 to-gold-600 text-white shadow-gold font-bold'
                   : link.isHighlight
-                  ? 'bg-gold-500/10 text-gold-400 border border-gold-500/30 hover:bg-gold-500/20'
-                  : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+                  ? 'bg-gold-500/15 text-gold-300 border border-gold-400/40 hover:bg-gold-500/25'
+                  : 'text-zinc-300 hover:text-white hover:bg-royal-900/60'
               )}
             >
               <Icon className={cn('w-4 h-4', isActive ? 'text-white' : link.isHighlight ? 'text-gold-400' : 'text-zinc-400')} />
@@ -74,29 +127,27 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
         })}
       </nav>
 
-      {/* Footer Info & Quick Link */}
+      {/* Footer Info & Logout */}
       <div className="p-4 border-t border-zinc-800/80 space-y-2">
         <Link
           href="/"
           target="_blank"
-          className="flex items-center justify-between w-full px-3 py-2 rounded-xl text-xs text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
+          className="flex items-center justify-between w-full px-3 py-2 rounded-xl text-xs text-zinc-400 hover:text-gold-300 hover:bg-royal-900/60 transition-colors"
         >
           <span className="flex items-center gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-gold-500" />
+            <Sparkles className="w-3.5 h-3.5 text-gold-400" />
             <span>Voir le site public</span>
           </span>
           <ExternalLink className="w-3.5 h-3.5" />
         </Link>
 
-        {onLogout && (
-          <button
-            onClick={onLogout}
-            className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-xs text-rose-400 hover:bg-rose-500/10 transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Déconnexion</span>
-          </button>
-        )}
+        <button
+          onClick={handleSignOut}
+          className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-xs text-rose-400 hover:bg-rose-500/15 transition-colors font-medium"
+        >
+          <LogOut className="w-4 h-4" />
+          <span>Déconnexion</span>
+        </button>
       </div>
     </aside>
   );

@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
 import { Database, GuestItem, PhotoItem, GuestbookItem, ProjectTaskItem, TableItem, EventItem, ReminderLogItem } from '../database.types';
 import { INITIAL_EVENTS, INITIAL_GUESTS, INITIAL_GUESTBOOK, INITIAL_PHOTOS, INITIAL_TABLES, INITIAL_TASKS, INITIAL_REMINDERS } from '../mock-data';
 
@@ -12,7 +12,7 @@ export const isSupabaseConfigured =
   !supabaseAnonKey.includes('placeholder');
 
 export const supabase = isSupabaseConfigured
-  ? createClient<any>(supabaseUrl, supabaseAnonKey)
+  ? createBrowserClient<any>(supabaseUrl, supabaseAnonKey)
   : null;
 
 /**
@@ -59,6 +59,39 @@ class WeddingDataStore {
     }
   }
 
+  // --- AUTH & ROLES ---
+  async getUserRole(userId?: string): Promise<'ADMIN' | 'PROTOCOLE'> {
+    if (supabase) {
+      try {
+        const uid = userId || (await supabase.auth.getUser()).data.user?.id;
+        if (uid) {
+          const { data, error } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', uid)
+            .single();
+          if (!error && data?.role) {
+            return data.role as 'ADMIN' | 'PROTOCOLE';
+          }
+          // Fallback to user metadata
+          const { data: userData } = await supabase.auth.getUser();
+          const metaRole = userData.user?.user_metadata?.role;
+          if (metaRole === 'ADMIN' || metaRole === 'PROTOCOLE') {
+            return metaRole;
+          }
+        }
+      } catch (err) {
+        console.warn('Supabase getUserRole fallback:', err);
+      }
+    }
+    const localRole = this.getItem<'ADMIN' | 'PROTOCOLE'>('auth_role', 'ADMIN');
+    return localRole;
+  }
+
+  async setUserRole(role: 'ADMIN' | 'PROTOCOLE'): Promise<void> {
+    this.setItem('auth_role', role);
+  }
+
   // --- EVENTS ---
   async getEvents(): Promise<EventItem[]> {
     if (supabase) {
@@ -101,8 +134,8 @@ class WeddingDataStore {
         capacite: table.capacite || 8,
         forme: table.forme || 'ronde',
         coordonnees_x_y: table.coordonnees_x_y || { x: 300, y: 300, rotation: 0 },
-        couleur: table.couleur || '#B89355',
-        zone: table.zone || 'Salle Principale',
+        couleur: table.couleur || '#D4AF37',
+        zone: table.zone || 'Zone Principale',
         notes: table.notes || '',
         created_at: new Date().toISOString(),
       };
@@ -147,21 +180,14 @@ class WeddingDataStore {
   }
 
   async findGuestByQuery(query: string): Promise<GuestItem | null> {
+    const q = query.trim().toLowerCase();
     const guests = await this.getGuests();
-    const clean = query.trim().toLowerCase();
-    if (!clean) return null;
-
-    // Search by exact QR Code UID
-    const byQr = guests.find(g => g.qr_code_uid.toLowerCase() === clean);
-    if (byQr) return byQr;
-
-    // Search by Full Name or Email
-    const byName = guests.find(g => 
-      `${g.prenom} ${g.nom}`.toLowerCase().includes(clean) ||
-      `${g.nom} ${g.prenom}`.toLowerCase().includes(clean) ||
-      (g.email && g.email.toLowerCase() === clean)
-    );
-    return byName || null;
+    return guests.find(g => 
+      (g.qr_code_uid && g.qr_code_uid.toLowerCase() === q) ||
+      (g.email && g.email.toLowerCase() === q) ||
+      (`${g.prenom} ${g.nom}`.toLowerCase().includes(q)) ||
+      (`${g.nom} ${g.prenom}`.toLowerCase().includes(q))
+    ) || null;
   }
 
   async saveGuest(guest: Partial<GuestItem>): Promise<GuestItem> {
@@ -169,39 +195,31 @@ class WeddingDataStore {
     let updated: GuestItem;
 
     if (guest.id) {
+      const existing = guests.find(g => g.id === guest.id);
+      updated = { ...existing, ...guest, updated_at: new Date().toISOString() } as GuestItem;
       const index = guests.findIndex(g => g.id === guest.id);
-      const existing = index !== -1 ? guests[index] : ({} as GuestItem);
-      updated = {
-        ...existing,
-        ...guest,
-        updated_at: new Date().toISOString(),
-      } as GuestItem;
       if (index !== -1) guests[index] = updated;
       else guests.push(updated);
     } else {
-      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-      let code = "RK-";
-      for (let i = 0; i < 5; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
-
       updated = {
         id: generateUUID(),
         nom: guest.nom || '',
         prenom: guest.prenom || '',
-        email: guest.email || '',
-        telephone: guest.telephone || '',
+        email: guest.email,
+        telephone: guest.telephone,
         statut_rsvp: guest.statut_rsvp || 'en_attente',
         menu_choisi: guest.menu_choisi,
         allergies: guest.allergies,
         accompagnants_json: guest.accompagnants_json || [],
-        qr_code_uid: guest.qr_code_uid || code,
+        qr_code_uid: guest.qr_code_uid || `RK-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
         table_id: guest.table_id || null,
         checked_in: guest.checked_in || false,
         checked_in_at: guest.checked_in_at || null,
         checked_in_by: guest.checked_in_by || null,
-        nombre_invites: 1 + (guest.accompagnants_json?.length || 0),
+        nombre_invites: guest.nombre_invites || 1,
         navette_requise: guest.navette_requise || false,
         hebergement_requis: guest.hebergement_requis || false,
-        message_maries: guest.message_maries || '',
+        message_maries: guest.message_maries,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -219,31 +237,6 @@ class WeddingDataStore {
     return updated;
   }
 
-  async checkInGuest(guestIdOrQr: string, protocolName: string = 'Protocole'): Promise<GuestItem | null> {
-    const guests = await this.getGuests();
-    const target = guests.find(g => g.id === guestIdOrQr || g.qr_code_uid.toUpperCase() === guestIdOrQr.toUpperCase());
-    if (!target) return null;
-
-    target.checked_in = true;
-    target.checked_in_at = new Date().toISOString();
-    target.checked_in_by = protocolName;
-    target.updated_at = new Date().toISOString();
-
-    if (supabase) {
-      try {
-        await supabase.from('guests').update({
-          checked_in: true,
-          checked_in_at: target.checked_in_at,
-          checked_in_by: protocolName,
-        } as any).eq('id', target.id);
-      } catch (err) {
-        console.warn('Supabase checkInGuest sync error:', err);
-      }
-    }
-    this.setItem('guests', guests);
-    return target;
-  }
-
   async deleteGuest(guestId: string): Promise<void> {
     const guests = await this.getGuests();
     const filtered = guests.filter(g => g.id !== guestId);
@@ -257,7 +250,33 @@ class WeddingDataStore {
     this.setItem('guests', filtered);
   }
 
-  // --- PHOTOS & MODERATION ---
+  async checkInGuest(guestId: string, checkedInBy: string = 'Protocole Accueil'): Promise<GuestItem | null> {
+    const guests = await this.getGuests();
+    const guest = guests.find(g => g.id === guestId);
+    if (!guest) return null;
+
+    guest.checked_in = true;
+    guest.checked_in_at = new Date().toISOString();
+    guest.checked_in_by = checkedInBy;
+    guest.updated_at = new Date().toISOString();
+
+    if (supabase) {
+      try {
+        await supabase.from('guests').update({
+          checked_in: true,
+          checked_in_at: guest.checked_in_at,
+          checked_in_by: checkedInBy,
+          updated_at: guest.updated_at,
+        } as any).eq('id', guestId);
+      } catch (err) {
+        console.warn('Supabase checkInGuest sync error:', err);
+      }
+    }
+    this.setItem('guests', guests);
+    return guest;
+  }
+
+  // --- PHOTOS ---
   async getPhotos(includePending: boolean = false): Promise<PhotoItem[]> {
     if (supabase) {
       try {
@@ -271,25 +290,23 @@ class WeddingDataStore {
         console.warn('Supabase getPhotos fallback to local data:', err);
       }
     }
-    const photos = this.getItem('photos', INITIAL_PHOTOS);
-    if (includePending) return photos;
-    return photos.filter(p => p.statut === 'valide');
+    const local = this.getItem<PhotoItem[]>('photos', INITIAL_PHOTOS);
+    return includePending ? local : local.filter(p => p.statut === 'valide');
   }
 
-  async addPhoto(photo: Omit<PhotoItem, 'id' | 'created_at' | 'likes_count'>): Promise<PhotoItem> {
-    const current = this.getItem('photos', INITIAL_PHOTOS);
+  async addPhoto(photo: Partial<PhotoItem>): Promise<PhotoItem> {
+    const photos = await this.getPhotos(true);
     const newPhoto: PhotoItem = {
       id: generateUUID(),
-      url: photo.url,
-      storage_path: photo.storage_path,
+      url: photo.url || '',
       uploaded_by: photo.uploaded_by || 'Invité Anonyme',
-      event_id: photo.event_id,
+      event_id: photo.event_id || 'e1111111-1111-1111-1111-111111111111',
       caption: photo.caption,
       statut: photo.statut || 'en_attente',
       likes_count: 0,
       created_at: new Date().toISOString(),
     };
-    current.unshift(newPhoto);
+    photos.unshift(newPhoto);
 
     if (supabase) {
       try {
@@ -298,18 +315,18 @@ class WeddingDataStore {
         console.warn('Supabase addPhoto sync error:', err);
       }
     }
-    this.setItem('photos', current);
+    this.setItem('photos', photos);
     return newPhoto;
   }
 
-  async updatePhotoStatus(photoId: string, statut: 'valide' | 'rejete'): Promise<void> {
-    const photos = this.getItem('photos', INITIAL_PHOTOS);
-    const target = photos.find(p => p.id === photoId);
-    if (target) {
-      target.statut = statut;
+  async updatePhotoStatus(photoId: string, status: 'valide' | 'rejete'): Promise<void> {
+    const photos = await this.getPhotos(true);
+    const index = photos.findIndex(p => p.id === photoId);
+    if (index !== -1) {
+      photos[index].statut = status;
       if (supabase) {
         try {
-          await supabase.from('photos').update({ statut } as any).eq('id', photoId);
+          await supabase.from('photos').update({ statut: status } as any).eq('id', photoId);
         } catch (err) {
           console.warn('Supabase updatePhotoStatus sync error:', err);
         }
@@ -331,31 +348,31 @@ class WeddingDataStore {
     return this.getItem('guestbook', INITIAL_GUESTBOOK);
   }
 
-  async addGuestbookEntry(entry: Omit<GuestbookItem, 'id' | 'created_at' | 'is_pinned'>): Promise<GuestbookItem> {
-    const current = await this.getGuestbook();
-    const newEntry: GuestbookItem = {
+  async addGuestbookEntry(entry: Partial<GuestbookItem>): Promise<GuestbookItem> {
+    const items = await this.getGuestbook();
+    const newItem: GuestbookItem = {
       id: generateUUID(),
-      guest_name: entry.guest_name,
+      guest_name: entry.guest_name || 'Invité',
       email: entry.email,
-      message: entry.message,
-      emoji: entry.emoji || '🥂',
+      message: entry.message || '',
+      emoji: entry.emoji || '✨',
       is_pinned: false,
       created_at: new Date().toISOString(),
     };
-    current.unshift(newEntry);
+    items.unshift(newItem);
 
     if (supabase) {
       try {
-        await supabase.from('guestbook').insert(newEntry as any);
+        await supabase.from('guestbook').insert(newItem as any);
       } catch (err) {
         console.warn('Supabase addGuestbookEntry sync error:', err);
       }
     }
-    this.setItem('guestbook', current);
-    return newEntry;
+    this.setItem('guestbook', items);
+    return newItem;
   }
 
-  // --- KANBAN TASKS ---
+  // --- TASKS (KANBAN) ---
   async getTasks(): Promise<ProjectTaskItem[]> {
     if (supabase) {
       try {
@@ -373,19 +390,19 @@ class WeddingDataStore {
     let updated: ProjectTaskItem;
 
     if (task.id) {
-      const index = tasks.findIndex(t => t.id === task.id);
-      const existing = index !== -1 ? tasks[index] : ({} as ProjectTaskItem);
+      const existing = tasks.find(t => t.id === task.id);
       updated = { ...existing, ...task } as ProjectTaskItem;
+      const index = tasks.findIndex(t => t.id === task.id);
       if (index !== -1) tasks[index] = updated;
       else tasks.push(updated);
     } else {
       updated = {
         id: generateUUID(),
         titre: task.titre || 'Nouvelle Tâche',
-        description: task.description || '',
-        assigne_a: task.assigne_a || 'Kevin',
+        description: task.description,
+        assigne_a: task.assigne_a,
         priorite: task.priorite || 'moyenne',
-        echeance: task.echeance || '',
+        echeance: task.echeance,
         statut: task.statut || 'a_faire',
         ordre: tasks.length + 1,
         created_at: new Date().toISOString(),
