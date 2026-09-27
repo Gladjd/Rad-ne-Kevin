@@ -1,0 +1,151 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 43 33% 98%; /* Ivory #FDFBF7 */
+    --foreground: 30 15% 15%; /* Deep Charcoal */
+
+    --card: 0 0% 100%;
+    --card-foreground: 30 15% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 30 15% 15%;
+
+    --primary: 38 43% 53%; /* Champagne Gold #B89355 */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 130 15% 50%; /* Sage #6E9072 */
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 40 20% 93%;
+    --muted-foreground: 30 10% 45%;
+
+    --accent: 10 50% 62%; /* Romantic Blush #CE7C6C */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 38 25% 88%;
+    --input: 38 25% 88%;
+    --ring: 38 43% 53%;
+
+    --radius: 0.85rem;
+
+    --font-cormorant: 'Cormorant Garamond', Georgia, serif;
+    --font-great-vibes: 'Great Vibes', cursive;
+    --font-plus-jakarta: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  .dark {
+    --background: 220 20% 8%; /* Deep Luxury Noir */
+    --foreground: 43 20% 95%;
+
+    --card: 220 18% 11%;
+    --card-foreground: 43 20% 95%;
+
+    --popover: 220 18% 11%;
+    --popover-foreground: 43 20% 95%;
+
+    --primary: 38 50% 60%; /* Warm Gold */
+    --primary-foreground: 220 20% 8%;
+
+    --secondary: 130 15% 45%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 220 15% 18%;
+    --muted-foreground: 40 10% 65%;
+
+    --accent: 10 45% 65%;
+    --accent-foreground: 220 20% 8%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 220 15% 20%;
+    --input: 220 15% 20%;
+    --ring: 38 50% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased selection:bg-gold-200 selection:text-gold-900;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  h1, h2, h3, h4, .font-serif-luxury {
+    font-family: var(--font-cormorant);
+  }
+  .font-script-calligraphy {
+    font-family: var(--font-great-vibes);
+  }
+}
+
+/* Glassmorphism Luxury Utilities */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.glass-panel-dark {
+  background: rgba(20, 24, 33, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(184, 147, 85, 0.25);
+}
+
+.glass-card-gold {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(250, 247, 240, 0.8) 100%);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(184, 147, 85, 0.35);
+  box-shadow: 0 10px 30px -10px rgba(184, 147, 85, 0.15);
+}
+
+/* Gold Gradient Text */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #CAAB79 0%, #B89355 50%, #9C793F 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-rose-gradient {
+  background: linear-gradient(135deg, #DE9F91 0%, #CE7C6C 50%, #8D4739 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Shimmer Effect for Buttons */
+.gold-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(184, 147, 85, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(184, 147, 85, 0) 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #FAF7F0;
+}
+::-webkit-scrollbar-thumb {
+  background: #DBC29E;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #B89355;
+}
