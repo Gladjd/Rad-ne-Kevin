@@ -18,15 +18,22 @@ import {
   Smartphone,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { supabase, isSupabaseConfigured, weddingStore } from '@/lib/supabase/client';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 
 interface AdminSidebarProps {
   userRole?: 'ADMIN' | 'PROTOCOLE';
   onLogout?: () => void;
+  onNavigate?: () => void;
+  isMobileDrawer?: boolean;
 }
 
-export const AdminSidebar: React.FC<AdminSidebarProps> = ({ userRole = 'ADMIN', onLogout }) => {
+export const AdminSidebar: React.FC<AdminSidebarProps> = ({
+  userRole = 'ADMIN',
+  onLogout,
+  onNavigate,
+  isMobileDrawer = false,
+}) => {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -58,10 +65,21 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ userRole = 'ADMIN', 
     : allLinks;
 
   return (
-    <aside className="w-64 bg-royal-950 text-white flex flex-col border-r border-gold-500/30 shrink-0 h-screen sticky top-0 shadow-xl">
+    <aside
+      className={cn(
+        'bg-royal-950 text-white flex flex-col',
+        isMobileDrawer
+          ? 'w-full h-full'
+          : 'hidden md:flex w-64 border-r border-gold-500/30 shrink-0 h-screen sticky top-0 shadow-xl'
+      )}
+    >
       {/* Brand Header with Monogram */}
       <div className="p-6 border-b border-zinc-800/80">
-        <Link href="/" className="group flex items-center gap-3">
+        <Link
+          href="/"
+          onClick={onNavigate}
+          className="group flex items-center gap-3"
+        >
           <div className="w-10 h-10 rounded-full p-0.5 border border-gold-400 shadow-sm bg-white shrink-0 group-hover:scale-105 transition-transform">
             <img
               src="/img/logo.png"
@@ -111,6 +129,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ userRole = 'ADMIN', 
             <Link
               key={link.href}
               href={link.href}
+              onClick={onNavigate}
               className={cn(
                 'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs uppercase tracking-wider font-semibold transition-all',
                 isActive
@@ -132,6 +151,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ userRole = 'ADMIN', 
         <Link
           href="/"
           target="_blank"
+          onClick={onNavigate}
           className="flex items-center justify-between w-full px-3 py-2 rounded-xl text-xs text-zinc-400 hover:text-gold-300 hover:bg-royal-900/60 transition-colors"
         >
           <span className="flex items-center gap-2">
