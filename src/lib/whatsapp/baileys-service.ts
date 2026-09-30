@@ -5,6 +5,7 @@ import makeWASocket, {
   fetchLatestBaileysVersion,
   proto,
 } from '@whiskeysockets/baileys';
+import WebSocket from 'ws';
 import pino from 'pino';
 import path from 'path';
 import fs from 'fs';
@@ -72,13 +73,14 @@ export async function initWhatsAppSocket(): Promise<WASocket> {
   try {
     const authDir = getAuthDir();
     const { state, saveCreds } = await useMultiFileAuthState(authDir);
-    const { version } = await fetchLatestBaileysVersion().catch(() => ({ version: [2, 3000, 1015901307] as [number, number, number] }));
+    const { version } = await fetchLatestBaileysVersion().catch(() => ({ version: [2, 3000, 1043857760] as [number, number, number] }));
 
     const logger = pino({ level: 'silent' });
 
     const sock = makeWASocket({
       version,
       auth: state,
+      WebSocket: WebSocket as any,
       printQRInTerminal: false,
       logger,
       browser: ['Radène & Kévin Mariage', 'Chrome', '1.0.0'],
@@ -87,7 +89,7 @@ export async function initWhatsAppSocket(): Promise<WASocket> {
       defaultQueryTimeoutMs: 60000,
       keepAliveIntervalMs: 25000,
       generateHighQualityLinkPreview: true,
-    });
+    } as any);
 
     global.__whatsapp_sock = sock;
 

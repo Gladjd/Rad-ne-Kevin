@@ -131,13 +131,13 @@ export const WhatsAppManager: React.FC = () => {
     loadGuests();
   }, []);
 
-  // Polling for QR Code and Connection status when not yet connected
+  // Polling for QR Code and Connection status when connecting or waiting for QR scan
   useEffect(() => {
     if (connectionStatus === 'connected') return;
 
     const interval = setInterval(() => {
       fetchStatus();
-    }, 2500);
+    }, connectionStatus === 'connecting' || connectionStatus === 'qr_ready' ? 1500 : 3000);
 
     return () => clearInterval(interval);
   }, [connectionStatus]);
@@ -146,6 +146,7 @@ export const WhatsAppManager: React.FC = () => {
   const handleConnect = async () => {
     setIsInitializing(true);
     setConnectionError(null);
+    setConnectionStatus('connecting');
     try {
       const res = await fetch('/api/whatsapp/connect', { method: 'POST' });
       const data = await res.json();
@@ -153,11 +154,14 @@ export const WhatsAppManager: React.FC = () => {
         setConnectionStatus(data.status);
         if (data.qrCode) setQrCodeData(data.qrCode);
         if (data.user) setConnectedUser(data.user);
+        if (data.error) setConnectionError(data.error);
       } else {
         setConnectionError(data.error || 'Échec de démarrage de la session.');
+        setConnectionStatus('disconnected');
       }
     } catch (err: any) {
       setConnectionError(err?.message || 'Erreur de connexion au serveur.');
+      setConnectionStatus('disconnected');
     } finally {
       setIsInitializing(false);
     }

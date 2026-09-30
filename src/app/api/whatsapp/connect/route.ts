@@ -19,14 +19,20 @@ export async function POST() {
       console.error('Error starting WhatsApp socket:', err);
     });
 
-    // Short wait to capture initial QR if ready quickly
-    await new Promise((r) => setTimeout(r, 1200));
+    // Wait up to 3 seconds for QR code or connected status to be ready
+    for (let i = 0; i < 15; i++) {
+      await new Promise((r) => setTimeout(r, 200));
+      const s = getCurrentWhatsAppStatus();
+      if (s.qrCode || s.status === 'connected' || s.error) {
+        break;
+      }
+    }
 
     const updated = getCurrentWhatsAppStatus();
 
     return NextResponse.json({
       success: true,
-      message: 'Initialisation de la session WhatsApp en cours...',
+      message: 'Initialisation de la session WhatsApp...',
       ...updated,
     });
   } catch (error: any) {
