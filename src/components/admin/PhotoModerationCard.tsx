@@ -123,6 +123,7 @@ export const PhotoModerationCard: React.FC = () => {
                     src={photo.url}
                     alt={photo.caption || 'Photo'}
                     className="w-full h-full object-cover"
+                    style={{ objectPosition: 'center 35%' }}
                   />
                   <div className="absolute top-3 right-3">
                     {photo.statut === 'en_attente' && (

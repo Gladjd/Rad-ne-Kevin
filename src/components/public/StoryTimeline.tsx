@@ -11,6 +11,7 @@ export interface MilestoneItem {
   subtitle: string;
   description: string;
   image: string;
+  imagePosition?: string;
   tag: string;
 }
 
@@ -23,6 +24,7 @@ export const REAL_STORY_MILESTONES: MilestoneItem[] = [
     description:
       'Le premier échange, les premiers sourires et cette douce évidence que Dieu guidait nos pas l’un vers l’autre. Le tout début d’une aventure guidée par la Pureté et l’Amour.',
     image: '/img/couple-1.jpg',
+    imagePosition: 'center 28%',
     tag: 'La Rencontre',
   },
   {
@@ -33,6 +35,7 @@ export const REAL_STORY_MILESTONES: MilestoneItem[] = [
     description:
       'L’officialisation de nos sentiments et l’engagement de marcher ensemble. Une promesse d’amour sincère, portée par la foi et la complicité grandissante.',
     image: '/img/couple-4.jpg',
+    imagePosition: 'center 58%',
     tag: 'L’Engagement',
   },
   {
@@ -43,6 +46,7 @@ export const REAL_STORY_MILESTONES: MilestoneItem[] = [
     description:
       'En ce jour béni d’anniversaire, notre projet de vie s’est illuminé. Une demande émouvante et la décision sacrée d’unir nos cœurs devant Dieu et nos familles.',
     image: '/img/couple-14.jpg',
+    imagePosition: 'center 32%',
     tag: 'Le Grand OUI',
   },
   {
@@ -53,6 +57,7 @@ export const REAL_STORY_MILESTONES: MilestoneItem[] = [
     description:
       'L’union précieuse de nos deux familles dans le respect chaleureux de nos traditions, un moment empreint de bénédictions, de partage et de respect fraternel.',
     image: '/img/couple-15.jpg',
+    imagePosition: 'center 38%',
     tag: 'Tradition & Noblesse',
   },
   {
@@ -63,6 +68,7 @@ export const REAL_STORY_MILESTONES: MilestoneItem[] = [
     description:
       'La signature officielle de notre alliance républicaine, entourés de nos témoins de vie et de nos proches, scellant juridiquement notre vie à deux.',
     image: '/img/couple-16.jpg',
+    imagePosition: 'center 32%',
     tag: 'Union Civile',
   },
 ];
@@ -158,14 +164,15 @@ export const StoryTimeline: React.FC = () => {
                       </div>
 
                       {/* Photo Preview */}
-                      <div className="relative h-56 sm:h-64 w-full rounded-2xl overflow-hidden mb-5 shadow-sm border border-gold-200 group-hover:border-gold-400 transition-colors">
+                      <div className="relative h-64 sm:h-72 w-full rounded-2xl overflow-hidden mb-5 shadow-sm border border-gold-200 group-hover:border-gold-400 transition-colors bg-zinc-100">
                         <img
                           src={milestone.image}
                           alt={milestone.title}
-                          className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          style={{ objectPosition: milestone.imagePosition || 'center 35%' }}
                           loading="lazy"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-royal-950/60 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-royal-950/70 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
                         <div className="absolute bottom-3 left-3 text-white text-xs font-medium tracking-wider drop-shadow-md">
                           {milestone.displayDate}
                         </div>
