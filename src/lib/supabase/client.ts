@@ -97,12 +97,20 @@ class WeddingDataStore {
     if (supabase) {
       try {
         const { data, error } = await supabase.from('events').select('*').order('ordre', { ascending: true });
-        if (!error && data && data.length > 0) return data;
+        if (!error && data && data.length > 0) {
+          this.setItem('events', data);
+          return data;
+        }
       } catch (err) {
         console.warn('Supabase getEvents fallback to local data:', err);
       }
     }
-    return this.getItem('events', INITIAL_EVENTS);
+    const local = this.getItem('events', INITIAL_EVENTS);
+    if (!local || local.length !== INITIAL_EVENTS.length || local[0]?.date_heure?.includes('15:00')) {
+      this.setItem('events', INITIAL_EVENTS);
+      return INITIAL_EVENTS;
+    }
+    return local;
   }
 
   // --- TABLES ---
