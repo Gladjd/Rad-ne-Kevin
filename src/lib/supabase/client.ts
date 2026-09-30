@@ -189,13 +189,19 @@ class WeddingDataStore {
 
   async findGuestByQuery(query: string): Promise<GuestItem | null> {
     const q = query.trim().toLowerCase();
+    const qDigits = query.replace(/[^\d]/g, '');
     const guests = await this.getGuests();
-    return guests.find(g => 
-      (g.qr_code_uid && g.qr_code_uid.toLowerCase() === q) ||
-      (g.email && g.email.toLowerCase() === q) ||
-      (`${g.prenom} ${g.nom}`.toLowerCase().includes(q)) ||
-      (`${g.nom} ${g.prenom}`.toLowerCase().includes(q))
-    ) || null;
+    return guests.find(g => {
+      if (g.qr_code_uid && (g.qr_code_uid.toLowerCase() === q || g.qr_code_uid.toLowerCase() === `rk-${q.padStart(3, '0')}`)) return true;
+      if (g.email && g.email.toLowerCase() === q) return true;
+      if (`${g.prenom} ${g.nom}`.toLowerCase().includes(q)) return true;
+      if (`${g.nom} ${g.prenom}`.toLowerCase().includes(q)) return true;
+      if (qDigits && qDigits.length >= 6 && g.telephone) {
+        const phoneDigits = g.telephone.replace(/[^\d]/g, '');
+        if (phoneDigits.includes(qDigits) || qDigits.includes(phoneDigits)) return true;
+      }
+      return false;
+    }) || null;
   }
 
   async saveGuest(guest: Partial<GuestItem>): Promise<GuestItem> {
