@@ -331,17 +331,13 @@ export const ProgramSection: React.FC = () => {
                   style={{ border: 0 }}
                   loading="lazy"
                   src={`https://maps.google.com/maps?q=${encodeURIComponent(
-                    selectedMapEvent.lieu.includes('Fun Time')
-                      ? 'Salle de fete Fun Time Dakar'
-                      : selectedMapEvent.lieu.includes('Dieuppeul')
-                      ? 'Eglise Protestante du Senegal Dieuppeul Dakar'
-                      : `${selectedMapEvent.coordonnees_gps?.lat || 14.7126},${selectedMapEvent.coordonnees_gps?.lng || -17.4589}`
-                  )}&hl=fr&z=15&output=embed`}
+                    selectedMapEvent.adresse || selectedMapEvent.lieu
+                  )}&hl=fr&z=16&output=embed`}
                 />
               </div>
 
               <div className="text-xs text-royal-900 dark:text-zinc-300 mb-5 space-y-1 font-sans">
-                <p>📍 <strong>Adresse :</strong> {selectedMapEvent.adresse}</p>
+                <p>📍 <strong>Adresse / Plus Code :</strong> <span className="font-mono font-semibold text-royal-950 dark:text-gold-300 bg-gold-50/80 px-2 py-0.5 rounded border border-gold-200">{selectedMapEvent.adresse}</span></p>
                 <p>🚗 <strong>Accès &amp; Parking :</strong> Espaces dédiés aux invités du mariage</p>
               </div>
 
@@ -353,11 +349,7 @@ export const ProgramSection: React.FC = () => {
                 <div className="grid grid-cols-3 gap-2">
                   <a
                     href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-                      selectedMapEvent.lieu.includes('Fun Time')
-                        ? 'Salle de fete Fun Time Dakar'
-                        : selectedMapEvent.lieu.includes('Dieuppeul')
-                        ? 'Eglise Protestante du Senegal Dieuppeul Dakar'
-                        : `${selectedMapEvent.coordonnees_gps?.lat || 14.7126},${selectedMapEvent.coordonnees_gps?.lng || -17.4589}`
+                      selectedMapEvent.adresse || selectedMapEvent.lieu
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -366,7 +358,9 @@ export const ProgramSection: React.FC = () => {
                     <span>Google Maps</span>
                   </a>
                   <a
-                    href={`https://maps.apple.com/?daddr=${selectedMapEvent.coordonnees_gps?.lat || 14.7126},${selectedMapEvent.coordonnees_gps?.lng || -17.4589}&dirflg=d`}
+                    href={`https://maps.apple.com/?daddr=${encodeURIComponent(
+                      selectedMapEvent.adresse || selectedMapEvent.lieu
+                    )}&dirflg=d`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-3 rounded-xl bg-royal-900 hover:bg-royal-950 text-white text-center text-xs font-semibold uppercase tracking-wider transition-colors shadow-sm flex flex-col items-center justify-center gap-1 border border-gold-400"
@@ -374,7 +368,9 @@ export const ProgramSection: React.FC = () => {
                     <span>Apple Maps</span>
                   </a>
                   <a
-                    href={`https://waze.com/ul?ll=${selectedMapEvent.coordonnees_gps?.lat || 14.7126},${selectedMapEvent.coordonnees_gps?.lng || -17.4589}&navigate=yes`}
+                    href={`https://waze.com/ul?q=${encodeURIComponent(
+                      selectedMapEvent.adresse || selectedMapEvent.lieu
+                    )}&navigate=yes`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-3 rounded-xl bg-cyan-700 hover:bg-cyan-800 text-white text-center text-xs font-semibold uppercase tracking-wider transition-colors shadow-sm flex flex-col items-center justify-center gap-1"
