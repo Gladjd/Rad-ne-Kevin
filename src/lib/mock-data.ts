@@ -440,7 +440,7 @@ export const STORY_MILESTONES = [
     title: 'Premier Contact',
     subtitle: 'L’Aube de notre Histoire',
     description: 'Le premier échange, les premiers sourires partagés et le sentiment évident que nos destins venaient de s’entremêler pour l’éternité.',
-    image: '/img/couple-17.jpeg',
+    image: '/img/couple-17.jpg',
     tag: 'La Rencontre',
   },
   {
