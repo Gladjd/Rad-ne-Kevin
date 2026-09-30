@@ -15,6 +15,7 @@ import {
   Utensils,
   AlertCircle,
   ChevronDown,
+  MessageCircle,
 } from 'lucide-react';
 import { weddingStore } from '@/lib/supabase/client';
 import { GuestItem, TableItem, RsvpStatus } from '@/lib/database.types';
@@ -327,19 +328,32 @@ export const GuestDataTable: React.FC = () => {
                     {/* Actions */}
                     <td className="py-3 px-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
+                        {guest.telephone && (
+                          <a
+                            href={`https://wa.me/${guest.telephone.replace(/[^\d]/g, '').replace(/^00/, '')}?text=${encodeURIComponent(
+                              `✨ *Mariage Radène & Kévin - 5 Décembre 2026*\n\nBonjour *${guest.prenom}* ! Nous avons l'immense joie de vous inviter à célébrer notre mariage à Dakar.\n\n🔑 *Votre Code d'accès :* *${guest.qr_code_uid}*\n🔗 *Confirmez votre présence ici :*\nhttps://radene-kevin.com/#rsvp?code=${encodeURIComponent(guest.qr_code_uid)}\n\nAvec toute notre affection,\n*Radène & Kévin*`
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-lg text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors"
+                            title={`Envoyer le faire-part WhatsApp à ${guest.prenom}`}
+                          >
+                            <MessageCircle className="w-3.5 h-3.5" />
+                          </a>
+                        )}
                         <button
                           onClick={() => {
                             setEditingGuest(guest);
                             setIsModalOpen(true);
                           }}
-                          className="p-1.5 rounded-lg text-zinc-400 hover:text-gold-600 hover:bg-gold-50"
+                          className="p-1.5 rounded-lg text-zinc-400 hover:text-gold-600 hover:bg-gold-50 dark:hover:bg-zinc-800 transition-colors"
                           title="Modifier"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => handleDelete(guest.id, `${guest.prenom} ${guest.nom}`)}
-                          className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50"
+                          className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-zinc-800 transition-colors"
                           title="Supprimer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />

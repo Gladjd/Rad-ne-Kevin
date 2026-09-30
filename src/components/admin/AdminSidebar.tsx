@@ -10,6 +10,7 @@ import {
   Grid,
   Image as ImageIcon,
   Mail,
+  MessageCircle,
   Kanban,
   LogOut,
   ExternalLink,
@@ -56,7 +57,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     { name: 'Gestion des Invités', href: '/admin/invites', icon: Users, adminOnly: true },
     { name: 'Plan de Table 2D', href: '/admin/plan-de-table', icon: Grid, adminOnly: true },
     { name: 'Modération Photos', href: '/admin/moderation', icon: ImageIcon, adminOnly: true },
-    { name: 'Relances Email / SMS', href: '/admin/relances', icon: Mail, adminOnly: true },
+    { name: 'Faire-parts & WhatsApp', href: '/admin/relances', icon: MessageCircle, adminOnly: true },
     { name: 'Kanban Organisation', href: '/admin/kanban', icon: Kanban, adminOnly: true },
   ];
 

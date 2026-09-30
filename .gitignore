@@ -36,3 +36,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 .env*
+
+# whatsapp web session
+/.wweb_auth/
+*.zip
