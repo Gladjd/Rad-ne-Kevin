@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import {
   Camera,
@@ -145,6 +145,21 @@ export const QrScannerCamera: React.FC = () => {
     }, 1000);
   }, []);
 
+  // Live matching suggestions for manual search
+  const matchingSuggestions = useMemo(() => {
+    const q = manualCode.trim().toLowerCase();
+    if (!q || q.length < 1) return [];
+    return guests.filter((g) => {
+      const qDigits = q.replace(/[^\d]/g, '');
+      if (g.qr_code_uid && g.qr_code_uid.toLowerCase().includes(q)) return true;
+      if (/^\d+$/.test(q) && g.qr_code_uid.toLowerCase().includes(q.padStart(3, '0'))) return true;
+      if (`${g.prenom} ${g.nom}`.toLowerCase().includes(q)) return true;
+      if (`${g.nom} ${g.prenom}`.toLowerCase().includes(q)) return true;
+      if (qDigits.length >= 4 && g.telephone && g.telephone.replace(/[^\d]/g, '').includes(qDigits)) return true;
+      return false;
+    }).slice(0, 5);
+  }, [manualCode, guests]);
+
   const handleProcessCode = async (decodedText: string) => {
     const cleanCode = decodedText.trim();
     if (!cleanCode || isProcessingRef.current) return;
@@ -154,8 +169,8 @@ export const QrScannerCamera: React.FC = () => {
       // 1. Tenter l'appel via la Server Action Next.js 14
       let result = await checkInGuestAction(cleanCode, protocolStaffName);
 
-      // 2. Si le serveur Supabase n'est pas configuré en ligne, basculer sur le store réactif local
-      if (!result.success && result.status === 'ERROR') {
+      // 2. Si le serveur renvoie NOT_FOUND ou ERROR, basculer sur le store réactif local
+      if (!result.success) {
         const localGuest = await weddingStore.findGuestByQuery(cleanCode);
         if (localGuest) {
           const wasAlready = localGuest.checked_in;
@@ -166,16 +181,10 @@ export const QrScannerCamera: React.FC = () => {
             success: true,
             status: wasAlready ? 'ALREADY_CHECKED_IN' : 'SUCCESS',
             message: wasAlready
-              ? `Invité déjà pointé précédemment.`
+              ? `Invité déjà pointé précédemment (${localGuest.checked_in_at ? new Date(localGuest.checked_in_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : 'Aujourd\'hui'}).`
               : `Bienvenue ${localGuest.prenom} ${localGuest.nom} ! Pointage validé avec succès.`,
             guest: updated || localGuest,
             table,
-          };
-        } else {
-          result = {
-            success: false,
-            status: 'NOT_FOUND',
-            message: `Aucun invité trouvé pour le code « ${cleanCode} ».`,
           };
         }
       }
@@ -388,8 +397,8 @@ export const QrScannerCamera: React.FC = () => {
           )}
         </div>
 
-        {/* Manual Fallback Input */}
-        <div className="mt-6 pt-4 border-t border-gold-200/60">
+        {/* Manual Fallback Input with Autocomplete */}
+        <div className="mt-6 pt-4 border-t border-gold-200/60 relative">
           <form onSubmit={handleManualSubmit} className="flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-3.5 w-4 h-4 text-zinc-400" />
@@ -397,7 +406,7 @@ export const QrScannerCamera: React.FC = () => {
                 type="text"
                 value={manualCode}
                 onChange={(e) => setManualCode(e.target.value)}
-                placeholder="Saisie manuelle : Code UID (ex: RK-A8F29) ou Nom..."
+                placeholder="Saisie manuelle : Nom, Prénom ou Code QR (ex: Glad, RK-029, 29)..."
                 className="w-full pl-11 pr-4 py-3 rounded-2xl bg-white dark:bg-zinc-800 border border-gold-300 text-xs focus:outline-none focus:ring-2 focus:ring-gold-500"
               />
             </div>
@@ -408,6 +417,55 @@ export const QrScannerCamera: React.FC = () => {
               Valider
             </button>
           </form>
+
+          {/* Autocomplete Suggestions Box */}
+          {manualCode.trim().length >= 1 && matchingSuggestions.length > 0 && (
+            <div className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-zinc-900 border border-gold-300/80 dark:border-zinc-700 rounded-2xl shadow-xl z-30 p-2 space-y-1 divide-y divide-zinc-100 dark:divide-zinc-800">
+              <div className="px-3 py-1 text-[10px] uppercase font-bold text-gold-700 dark:text-gold-400">
+                Suggestions trouvées ({matchingSuggestions.length}) :
+              </div>
+              {matchingSuggestions.map((g) => {
+                const tableName = tables.find((t) => t.id === g.table_id)?.nom_numero || 'Table non assignée';
+                return (
+                  <div
+                    key={g.id}
+                    className="p-2.5 rounded-xl hover:bg-gold-50 dark:hover:bg-zinc-800/80 flex items-center justify-between gap-3 text-xs transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-gold-100 dark:bg-zinc-800 text-gold-900 dark:text-gold-300">
+                        {g.qr_code_uid}
+                      </span>
+                      <div>
+                        <span className="font-semibold text-zinc-900 dark:text-zinc-100 block">
+                          {g.prenom} {g.nom}
+                        </span>
+                        <span className="text-[10px] text-zinc-400 block">
+                          {tableName} • {g.telephone || 'Sans tél'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setManualCode('');
+                          handleProcessCode(g.qr_code_uid);
+                        }}
+                        className={`px-3 py-1.5 rounded-xl font-semibold text-[11px] transition-all ${
+                          g.checked_in
+                            ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300'
+                            : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm'
+                        }`}
+                      >
+                        {g.checked_in ? 'Déjà Pointé ⚠️' : 'Pointer Invité ✨'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 

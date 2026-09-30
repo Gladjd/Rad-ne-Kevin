@@ -187,21 +187,81 @@ class WeddingDataStore {
     return this.getItem('guests', INITIAL_GUESTS);
   }
 
-  async findGuestByQuery(query: string): Promise<GuestItem | null> {
-    const q = query.trim().toLowerCase();
+  async findGuestByQuery(rawQuery: string): Promise<GuestItem | null> {
+    let query = (rawQuery || '').trim();
+    if (!query) return null;
+
+    if (query.includes('code=')) {
+      const match = query.match(/code=([^&#\s]+)/i);
+      if (match) query = decodeURIComponent(match[1]);
+    } else if (query.includes('RK-') || query.includes('rk-')) {
+      const match = query.match(/(RK-[A-Za-z0-9]+)/i);
+      if (match) query = match[1];
+    }
+
+    const q = query.toLowerCase();
     const qDigits = query.replace(/[^\d]/g, '');
     const guests = await this.getGuests();
-    return guests.find(g => {
-      if (g.qr_code_uid && (g.qr_code_uid.toLowerCase() === q || g.qr_code_uid.toLowerCase() === `rk-${q.padStart(3, '0')}`)) return true;
-      if (g.email && g.email.toLowerCase() === q) return true;
-      if (`${g.prenom} ${g.nom}`.toLowerCase().includes(q)) return true;
-      if (`${g.nom} ${g.prenom}`.toLowerCase().includes(q)) return true;
-      if (qDigits && qDigits.length >= 6 && g.telephone) {
+
+    // 1. Exact QR code match
+    let found = guests.find((g) => g.qr_code_uid && g.qr_code_uid.toLowerCase() === q);
+    if (found) return found;
+
+    // 2. Numeric QR code (e.g. '29' or '029' -> 'RK-029')
+    if (/^\d+$/.test(q)) {
+      const padded = `rk-${q.padStart(3, '0')}`;
+      found = guests.find(
+        (g) => g.qr_code_uid && (g.qr_code_uid.toLowerCase() === padded || g.qr_code_uid.toLowerCase() === `rk-${q}`)
+      );
+      if (found) return found;
+    }
+
+    // 3. Exact full name
+    found = guests.find(
+      (g) =>
+        `${g.prenom} ${g.nom}`.trim().toLowerCase() === q ||
+        `${g.nom} ${g.prenom}`.trim().toLowerCase() === q
+    );
+    if (found) return found;
+
+    // 4. Exact prenom or exact nom
+    found = guests.find((g) => g.prenom.trim().toLowerCase() === q || g.nom.trim().toLowerCase() === q);
+    if (found) return found;
+
+    // 5. Starts with name (prenom or nom)
+    found = guests.find((g) => g.prenom.toLowerCase().startsWith(q) || g.nom.toLowerCase().startsWith(q));
+    if (found) return found;
+
+    // 6. Name contains query
+    found = guests.find(
+      (g) =>
+        `${g.prenom} ${g.nom}`.toLowerCase().includes(q) ||
+        `${g.nom} ${g.prenom}`.toLowerCase().includes(q)
+    );
+    if (found) return found;
+
+    // 7. Phone digits match
+    if (qDigits.length >= 6) {
+      found = guests.find((g) => {
+        if (!g.telephone) return false;
         const phoneDigits = g.telephone.replace(/[^\d]/g, '');
-        if (phoneDigits.includes(qDigits) || qDigits.includes(phoneDigits)) return true;
-      }
-      return false;
-    }) || null;
+        return phoneDigits.includes(qDigits) || qDigits.includes(phoneDigits);
+      });
+      if (found) return found;
+    }
+
+    // 8. Accompagnants match
+    found = guests.find((g) => {
+      if (!Array.isArray(g.accompagnants_json)) return false;
+      return g.accompagnants_json.some(
+        (a) =>
+          `${a.prenom} ${a.nom}`.toLowerCase().includes(q) ||
+          (a.prenom && a.prenom.toLowerCase().includes(q)) ||
+          (a.nom && a.nom.toLowerCase().includes(q))
+      );
+    });
+
+    return found || null;
   }
 
   async saveGuest(guest: Partial<GuestItem>): Promise<GuestItem> {

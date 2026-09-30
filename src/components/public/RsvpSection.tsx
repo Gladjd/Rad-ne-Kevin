@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
 import {
@@ -75,6 +75,40 @@ export const RsvpSection: React.FC = () => {
       icon: '🧒',
     },
   ];
+
+  // Auto-detect code from URL on load
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const urlParams = new URLSearchParams(window.location.search);
+    let codeFromUrl = urlParams.get('code');
+    if (!codeFromUrl && window.location.hash.includes('code=')) {
+      const hashQuery = window.location.hash.split('?')[1];
+      if (hashQuery) {
+        const hashParams = new URLSearchParams(hashQuery);
+        codeFromUrl = hashParams.get('code');
+      }
+    }
+    if (codeFromUrl) {
+      setSearchQuery(codeFromUrl);
+      weddingStore.findGuestByQuery(codeFromUrl).then((found) => {
+        if (found) {
+          setExistingGuest(found);
+          setNom(found.nom);
+          setPrenom(found.prenom);
+          setEmail(found.email || '');
+          setTelephone(found.telephone || '');
+          setStatutRsvp(found.statut_rsvp === 'en_attente' ? 'confirme' : (found.statut_rsvp as any));
+          if (found.menu_choisi) setMenuChoisi(found.menu_choisi);
+          if (found.allergies) setAllergies(found.allergies);
+          if (found.accompagnants_json) setAccompagnants(found.accompagnants_json);
+          setNavetteRequise(found.navette_requise);
+          setHebergementRequis(found.hebergement_requis);
+          setMessageMaries(found.message_maries || '');
+          setStep(2);
+        }
+      });
+    }
+  }, []);
 
   // Search existing guest
   const handleSearch = async (e: React.FormEvent) => {
