@@ -5,7 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "node scripts/prepare-standalone.js",
     "start": "next start",
+    "start:standalone": "node .next/standalone/server.js",
+    "server": "node server.js",
     "lint": "next lint"
   },
   "dependencies": {

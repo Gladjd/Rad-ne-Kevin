@@ -3,6 +3,7 @@ import "@/styles/globals.css";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://radene-kevin.com"),
   title: "Mariage de Radène & Kévin | 5 Décembre 2026 • Pureté, Amour & Charité",
   description:
     "Célébrez le sacrement de mariage de Radène & Kévin le Samedi 5 Décembre 2026 à la Paroisse Sainte-Thérèse de Dieuppeul, Dakar. Confirmez votre présence (RSVP), découvrez le programme et partagez vos vœux.",

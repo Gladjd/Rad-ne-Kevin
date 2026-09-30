@@ -1,0 +1,26 @@
+# ==============================================================================
+# DOCKER-COMPOSE - HOSTINGER VPS / CLOUD DOCKER
+# ==============================================================================
+
+version: '3.8'
+
+services:
+  wedding-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: radene-kevin-wedding
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.local
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
