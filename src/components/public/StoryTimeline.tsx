@@ -24,7 +24,7 @@ export const REAL_STORY_MILESTONES: MilestoneItem[] = [
     description:
       'Le premier échange, les premiers sourires et cette douce évidence que Dieu guidait nos pas l’un vers l’autre. Le tout début d’une aventure guidée par la Pureté et l’Amour.',
     image: '/img/couple-17.jpeg',
-    imagePosition: 'center 28%',
+    imagePosition: 'center 50%',
     tag: 'La Rencontre',
   },
   {
