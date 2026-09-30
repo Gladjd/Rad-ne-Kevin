@@ -56,8 +56,8 @@ export const REAL_STORY_MILESTONES: MilestoneItem[] = [
     subtitle: 'L’Honneur & La Bénédiction Familiale',
     description:
       'L’union précieuse de nos deux familles dans le respect chaleureux de nos traditions, un moment empreint de bénédictions, de partage et de respect fraternel.',
-    image: '/img/couple-15.jpg',
-    imagePosition: 'center 38%',
+    image: '/img/couple-12.jpg',
+    imagePosition: 'center 28%',
     tag: 'Tradition & Noblesse',
   },
   {

@@ -481,7 +481,7 @@ export const STORY_MILESTONES = [
     title: 'La Cérémonie de la Dot',
     subtitle: 'Bénédiction Familiale & Tradition',
     description: 'L’union sacrée de nos deux familles dans le respect de nos traditions ancestrales et chrétiennes.',
-    image: '/img/couple-15.jpg',
+    image: '/img/couple-12.jpg',
     tag: 'Tradition & Noblesse',
   },
   {
