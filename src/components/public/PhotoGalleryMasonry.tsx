@@ -89,9 +89,9 @@ export const PhotoGalleryMasonry: React.FC = () => {
           <div className="flex flex-wrap items-center justify-center gap-2 mt-8">
             {[
               { id: 'all', label: 'Toutes les photos' },
-              { id: 'e1111111-1111-1111-1111-111111111111', label: 'Bénédiction Nuptiale (Dieuppeul)' },
-              { id: 'e2222222-2222-2222-2222-222222222222', label: 'Cocktail & Félicitations' },
-              { id: 'e3333333-3333-3333-3333-333333333333', label: 'Dîner de Gala & Soirée' },
+              { id: 'e1111111-1111-1111-1111-111111111111', label: 'Bénédiction Nuptiale (11h00)' },
+              { id: 'e2222222-2222-2222-2222-222222222222', label: 'Soirée de Gala (Fun Time)' },
+              { id: 'e3333333-3333-3333-3333-333333333333', label: 'Culte d’Action de Grâce' },
             ].map((f) => (
               <button
                 key={f.id}

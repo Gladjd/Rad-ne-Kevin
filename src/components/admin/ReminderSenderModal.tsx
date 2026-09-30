@@ -17,20 +17,20 @@ export const ReminderSenderModal: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Template preview
-  const emailTemplate = `Objet : Mariage de Radene & Kevin - Votre réponse souhaitée pour le 20 Juin 2026 🥂
+  const emailTemplate = `Objet : Mariage de Radène & Kévin - Votre réponse souhaitée pour le 5 Décembre 2026 🥂
 
 Chère/Cher {Prénom},
 
-Le grand jour approche à grands pas ! Nous finalisons les préparatifs avec notre chef traiteur et nous serions enchantés de vous compter parmi nous au Château Saint-Georges à Grasse le Samedi 20 Juin 2026.
+Le grand jour approche à grands pas ! Nous finalisons les préparatifs pour notre célébration à l'Eglise Protestante de Dieuppeul (11h00) et la soirée de gala à la salle Fun Time (20h00) le Samedi 5 Décembre 2026.
 
-Pourriez-vous prendre un court instant pour confirmer votre présence et votre choix de menu gastronomique ?
+Pourriez-vous prendre un court instant pour confirmer votre présence et vos accompagnants ?
 
-👉 Confirmez votre venue ici : https://mariage-radene-kevin.com/#rsvp?code={Code}
+👉 Confirmez votre venue ici : https://radene-kevin.com/#rsvp?code={Code}
 
 Avec toute notre affection,
-Radene & Kevin`;
+Radène & Kévin`;
 
-  const smsTemplate = `Mariage Radene & Kevin : Bonjour {Prénom} ! Nous finalisons le plan de table pour le 20 Juin. Merci de nous confirmer votre présence et choix de menu : https://mariage-radene-kevin.com/#rsvp 💍`;
+  const smsTemplate = `Mariage Radène & Kévin : Bonjour {Prénom} ! Nous finalisons les préparatifs pour le 5 Décembre 2026 à Dakar. Merci de nous confirmer votre présence : https://radene-kevin.com/#rsvp 💍`;
 
   const loadData = async () => {
     const [allGuests, logs] = await Promise.all([

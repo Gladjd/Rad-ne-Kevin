@@ -90,7 +90,7 @@ export default function AdminDashboardPage() {
           <div className="relative z-10 space-y-2.5 max-w-2xl">
             <div className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs uppercase font-bold tracking-widest text-gold-300 bg-royal-900/90 px-3 py-1 rounded-full border border-gold-400/40">
               <Calendar className="w-3.5 h-3.5 text-gold-400" />
-              <span>Jour J : Samedi 5 Décembre 2026 • Paroisse de Dieuppeul, Dakar</span>
+              <span>Jour J : Samedi 5 Décembre 2026 • 11h00 • Eglise Protestante de Dieuppeul, Dakar</span>
             </div>
 
             <h2 className="font-serif-luxury text-2xl sm:text-4xl font-bold tracking-tight text-white">

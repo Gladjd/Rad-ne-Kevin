@@ -18,12 +18,12 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Variables build-time (avec fallbacks par défaut)
-ARG NEXT_PUBLIC_SUPABASE_URL=https://xeymklzeaayjbqzacuhp.supabase.co
-ARG NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhleW1rbHplYWF5amJxemFjdWhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3MDg0ODMsImV4cCI6MjEwNjI4NDQ4M30.HNkmDGmEsn_xS5_pTZ0LQmZdXQsWnKkGF9rmzYijnEI
+ARG NEXT_PUBLIC_SUPABASE_URL=https://bgdoudwqamjxlzawqtkl.supabase.co
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_7krLDedweBPHtlAPtli9Vw_TPN6my_k
 ARG NEXT_PUBLIC_ADMIN_PIN=2026
 ARG NEXT_PUBLIC_WEDDING_TITLE="Radene & Kevin"
-ARG NEXT_PUBLIC_WEDDING_DATE="2026-12-05T15:00:00+00:00"
-ARG NEXT_PUBLIC_WEDDING_LOCATION="Paroisse Sainte-Thérèse de Dieuppeul, Dakar"
+ARG NEXT_PUBLIC_WEDDING_DATE="2026-12-05T11:00:00+00:00"
+ARG NEXT_PUBLIC_WEDDING_LOCATION="Eglise Protestante du Sénégal, Paroisse de Dieuppeul, Dakar"
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production

@@ -60,21 +60,21 @@ export const ProgramSection: React.FC = () => {
   const hotels = [
     {
       name: 'Radisson Blu Hotel, Dakar Sea Plaza (5★)',
-      distance: 'À 12 min de la Paroisse de Dieuppeul',
+      distance: 'À 12 min de l’Eglise Protestante de Dieuppeul',
       address: 'Route de la Corniche Ouest, Dakar',
       price: 'Tarif préférentiel mariage : RADENE-KEVIN-2026',
       link: 'https://maps.google.com/?q=Radisson+Blu+Hotel+Dakar',
     },
     {
       name: 'Pullman Dakar Teranga (5★)',
-      distance: 'À 15 min de la Paroisse de Dieuppeul',
+      distance: 'À 15 min de l’Eglise Protestante de Dieuppeul',
       address: '10 Rue Colbert, Plateau, Dakar',
       price: 'Vue imprenable sur l’Océan & Île de Gorée',
       link: 'https://maps.google.com/?q=Pullman+Dakar+Teranga',
     },
     {
       name: 'Hôtel Le Djoloff (Boutique Hôtel de Charme)',
-      distance: 'À 10 min de la Paroisse de Dieuppeul',
+      distance: 'À 10 min de l’Eglise Protestante de Dieuppeul',
       address: '7 Rue Nani, Fann Hock, Dakar',
       price: 'Idéal pour séjour intime & familial',
       link: 'https://maps.google.com/?q=Hotel+Le+Djoloff+Dakar',
@@ -84,15 +84,15 @@ export const ProgramSection: React.FC = () => {
   const faqs = [
     {
       q: 'Quel est le dress code général du mariage ?',
-      a: 'Pour la bénédiction nuptiale à la Paroisse de Dieuppeul et le cocktail, nous vous invitons à porter des tenues très élégantes avec des nuances de Blanc Pur, Or Métallique ou Bleu Roi. Pour le dîner de gala, le Black Tie (smoking, costumes d’apparat et robes longues de soirée) est vivement souhaité.',
+      a: 'Pour la bénédiction nuptiale à l’Eglise Protestante du Sénégal (Dieuppeul), nous vous invitons à porter des tenues très élégantes avec des nuances de Blanc Pur, Or Métallique ou Bleu Roi. Pour la soirée de gala à la salle de fête Fun Time, le Black Tie (smoking, costumes d’apparat et robes longues de soirée) est vivement souhaité.',
     },
     {
-      q: 'À quelle heure est-il recommandé d’arriver à l’église ?',
-      a: 'La bénédiction nuptiale débute précisément à 15h00. Nous prions les invités d’arriver dès 14h30 à la Paroisse Sainte-Thérèse de Dieuppeul pour l’installation et l’accueil protocolaire.',
+      q: 'À quelle heure est-il recommandé d’arriver pour les célébrations ?',
+      a: 'Le Samedi 5 Décembre 2026, la bénédiction nuptiale débute précisément à 11h00 (accueil des invités dès 10h30 à l’Eglise Protestante du Sénégal, Paroisse de Dieuppeul). La soirée de gala débutera à 20h00 à la salle de fête Fun Time. Le Dimanche 6 Décembre 2026, le culte d’action de grâce aura lieu à 10h00 à l’Eglise Protestante de Dieuppeul.',
     },
     {
       q: 'Y a-t-il des navettes et un service de sécurité organisés ?',
-      a: 'Oui, un service de navettes climatisées et un protocole de sécurité dédié assureront les liaisons entre l’église, les lieux de réception et les principaux hôtels.',
+      a: 'Oui, un service de navettes climatisées et un protocole de sécurité dédié assureront les liaisons entre l’Eglise Protestante de Dieuppeul, la salle de fête Fun Time et les principaux hôtels.',
     },
     {
       q: 'Comment utiliser mon pass QR Code ?',
@@ -107,7 +107,7 @@ export const ProgramSection: React.FC = () => {
         <div className="text-center max-w-2xl mx-auto mb-14">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-royal-50 dark:bg-royal-950 border border-gold-300 text-royal-800 dark:text-gold-300 text-xs uppercase tracking-widest font-semibold mb-3 shadow-sm">
             <Calendar className="w-3.5 h-3.5 text-royal-700 dark:text-gold-400" />
-            <span>Déroulement du 5 Décembre 2026</span>
+            <span>Samedi 5 &amp; Dimanche 6 Décembre 2026</span>
           </div>
           <h2 className="font-serif-luxury text-4xl sm:text-5xl lg:text-6xl text-royal-950 dark:text-zinc-50 font-normal">
             Le Programme &amp; Infos Pratiques
@@ -331,8 +331,10 @@ export const ProgramSection: React.FC = () => {
                   style={{ border: 0 }}
                   loading="lazy"
                   src={`https://maps.google.com/maps?q=${encodeURIComponent(
-                    selectedMapEvent.lieu.includes('Dieuppeul')
-                      ? 'Paroisse Sainte Therese Dieuppeul Dakar'
+                    selectedMapEvent.lieu.includes('Fun Time')
+                      ? 'Salle de fete Fun Time Dakar'
+                      : selectedMapEvent.lieu.includes('Dieuppeul')
+                      ? 'Eglise Protestante du Senegal Dieuppeul Dakar'
                       : `${selectedMapEvent.coordonnees_gps?.lat || 14.7126},${selectedMapEvent.coordonnees_gps?.lng || -17.4589}`
                   )}&hl=fr&z=15&output=embed`}
                 />
@@ -351,8 +353,10 @@ export const ProgramSection: React.FC = () => {
                 <div className="grid grid-cols-3 gap-2">
                   <a
                     href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-                      selectedMapEvent.lieu.includes('Dieuppeul')
-                        ? 'Paroisse Sainte Therese Dieuppeul Dakar'
+                      selectedMapEvent.lieu.includes('Fun Time')
+                        ? 'Salle de fete Fun Time Dakar'
+                        : selectedMapEvent.lieu.includes('Dieuppeul')
+                        ? 'Eglise Protestante du Senegal Dieuppeul Dakar'
                         : `${selectedMapEvent.coordonnees_gps?.lat || 14.7126},${selectedMapEvent.coordonnees_gps?.lng || -17.4589}`
                     )}`}
                     target="_blank"

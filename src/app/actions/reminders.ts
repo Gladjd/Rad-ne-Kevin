@@ -94,7 +94,7 @@ export async function sendBatchRemindersAction(
             await resendClient.emails.send({
               from: `Mariage Radene & Kevin <${resendFromEmail}>`,
               to: [guestEmail],
-              subject: `✨ Radene & Kevin — Votre réponse souhaitée pour le 20 Juin 2026 🥂`,
+              subject: `✨ Radene & Kevin — Votre réponse souhaitée pour le 5 Décembre 2026 🥂`,
               html: `
                 <div style="font-family: 'Georgia', serif; background-color: #FDFBF7; padding: 36px 16px; color: #271C0B; margin: 0;">
                   <div style="max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; padding: 36px 28px; border: 1px solid #E8D8BF; box-shadow: 0 10px 30px rgba(184,147,85,0.15); text-align: center;">
@@ -105,14 +105,14 @@ export async function sendBatchRemindersAction(
                       Radene &amp; Kevin
                     </h1>
                     <p style="text-transform: uppercase; font-size: 11px; letter-spacing: 2px; color: #7E5E2E; margin-bottom: 24px;">
-                      Samedi 20 Juin 2026 &bull; Ch&acirc;teau Saint-Georges, Grasse
+                      Samedi 5 D&eacute;cembre 2026 &bull; Dakar, S&eacute;n&eacute;gal
                     </p>
                     
                     <h2 style="font-size: 20px; color: #271C0B; margin: 0 0 14px 0; font-weight: normal;">
                       Ch&egrave;re / Cher ${guest?.prenom || 'invité(e)'},
                     </h2>
                     <p style="font-size: 15px; line-height: 1.6; color: #443217; margin-bottom: 24px;">
-                      Le grand jour approche &agrave; grands pas ! Nous finalisons les pr&eacute;paratifs avec notre chef et le plan de table. Nous serions tr&egrave;s honor&eacute;s de vous compter parmi nous.
+                      Le grand jour approche &agrave; grands pas ! Nous finalisons les pr&eacute;paratifs pour notre c&eacute;l&eacute;bration. Nous serions tr&egrave;s honor&eacute;s de vous compter parmi nous.
                     </p>
 
                     <div style="background-color: #FAF7F0; border-radius: 16px; padding: 20px; margin-bottom: 28px; border: 1px dashed #CAAB79;">
@@ -153,7 +153,7 @@ export async function sendBatchRemindersAction(
         } else if (twilioClient) {
           try {
             await twilioClient.messages.create({
-              body: `Mariage Radene & Kevin : Bonjour ${guest?.prenom || ''} ! Nous finalisons le plan de table pour le 20 Juin à Grasse. Merci de nous confirmer votre présence et choix de menu : ${rsvpLink} 💍`,
+              body: `Mariage Radene & Kevin : Bonjour ${guest?.prenom || ''} ! Nous finalisons les préparatifs pour le 5 Décembre 2026 à Dakar. Merci de nous confirmer votre présence : ${rsvpLink} 💍`,
               from: twilioPhoneNumber,
               to: guestPhone,
             });

@@ -115,7 +115,7 @@ export async function submitRsvpAction(guestData: Partial<GuestItem>): Promise<R
               Radene &amp; Kevin
             </h1>
             <p style="text-transform: uppercase; font-size: 11px; letter-spacing: 2px; color: #7E5E2E; margin-bottom: 28px;">
-              Samedi 20 Juin 2026 &bull; Ch&acirc;teau Saint-Georges, Grasse
+              Samedi 5 &bull; Dimanche 6 D&eacute;cembre 2026 &bull; Dakar, S&eacute;n&eacute;gal
             </p>
             
             <div style="border-top: 1px solid #F0E6D6; border-bottom: 1px solid #F0E6D6; padding: 20px 0; margin-bottom: 24px;">
@@ -130,11 +130,11 @@ export async function submitRsvpAction(guestData: Partial<GuestItem>): Promise<R
             <!-- CARTE VIP PASS QR CODE -->
             <div style="background: linear-gradient(180deg, #FAF7F0 0%, #F5EEDF 100%); border-radius: 20px; padding: 24px; margin-bottom: 28px; border: 2px solid #CAAB79;">
               <p style="font-size: 11px; font-weight: bold; color: #7E5E2E; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 12px 0;">
-                VOTRE PASS D&apos;ACC&Egrave;S VIP JOUR J
+                VOTRE PASS D&apos;ACC&Egrave;S JOUR J
               </p>
               
               <div style="background-color: #ffffff; display: inline-block; padding: 12px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); border: 1px solid #E8D8BF; margin-bottom: 12px;">
-                <img src="${qrDataUrl}" alt="QR Code VIP Pass" width="180" height="180" style="display: block; border-radius: 8px;" />
+                <img src="${qrDataUrl}" alt="QR Code Pass" width="180" height="180" style="display: block; border-radius: 8px;" />
               </div>
 
               <p style="font-family: monospace; font-size: 20px; font-weight: bold; color: #9C793F; letter-spacing: 4px; margin: 0 0 12px 0;">
@@ -149,11 +149,11 @@ export async function submitRsvpAction(guestData: Partial<GuestItem>): Promise<R
             </div>
 
             <p style="font-size: 13px; color: #7E5E2E; line-height: 1.5; margin-bottom: 28px;">
-              <em>Conservez cet e-mail ou faites une capture d&apos;&eacute;cran de votre QR Code. Il vous suffira de le pr&eacute;senter au protocole d&apos;accueil lors de votre arriv&eacute;e au ch&acirc;teau.</em>
+              <em>Conservez cet e-mail ou faites une capture d&apos;&eacute;cran de votre QR Code. Il vous suffira de le pr&eacute;senter au protocole d&apos;accueil lors de votre arriv&eacute;e.</em>
             </p>
 
-            <a href="https://mariage-radene-kevin.com/#programme" style="display: inline-block; background: linear-gradient(135deg, #CAAB79 0%, #B89355 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 9999px; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; box-shadow: 0 4px 15px rgba(184,147,85,0.4);">
-              D&eacute;couvrir le Programme &bull; Grasse 2026
+            <a href="https://radene-kevin.com/#programme" style="display: inline-block; background: linear-gradient(135deg, #CAAB79 0%, #B89355 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 9999px; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; box-shadow: 0 4px 15px rgba(184,147,85,0.4);">
+              D&eacute;couvrir le Programme &bull; Dakar 2026
             </a>
 
             <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #F0E6D6; font-size: 13px; color: #7E5E2E; font-style: italic;">

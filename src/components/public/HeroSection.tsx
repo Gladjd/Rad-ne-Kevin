@@ -74,17 +74,17 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onRsvpClick }) => {
         >
           <div className="flex items-center gap-2 bg-white/95 px-5 py-2.5 rounded-full border border-gold-400 shadow-sm">
             <Calendar className="w-4 h-4 text-gold-600" />
-            <span>Samedi 5 Décembre 2026</span>
+            <span>Samedi 5 Décembre 2026 • 11h00</span>
           </div>
           <div className="flex items-center gap-2 bg-white/95 px-5 py-2.5 rounded-full border border-gold-400 shadow-sm">
             <MapPin className="w-4 h-4 text-gold-600" />
-            <span>Paroisse de Dieuppeul • Dakar</span>
+            <span>Eglise Protestante de Dieuppeul • Dakar</span>
           </div>
         </motion.div>
 
-        {/* Live Dynamic Countdown to 5 Décembre 2026 */}
+        {/* Live Dynamic Countdown to 5 Décembre 2026 11h00 */}
         <div className="mb-10">
-          <Countdown targetDate="2026-12-05T15:00:00+00:00" />
+          <Countdown targetDate="2026-12-05T11:00:00+00:00" />
         </div>
 
         {/* Action Buttons */}

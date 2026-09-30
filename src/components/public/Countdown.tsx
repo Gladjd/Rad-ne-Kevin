@@ -8,7 +8,7 @@ interface CountdownProps {
 }
 
 export const Countdown: React.FC<CountdownProps> = ({
-  targetDate = '2026-12-05T15:00:00+00:00', // Samedi 5 Décembre 2026
+  targetDate = '2026-12-05T11:00:00+00:00', // Samedi 5 Décembre 2026 11h00
 }) => {
   const [timeLeft, setTimeLeft] = useState({
     days: 0,

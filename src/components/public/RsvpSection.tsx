@@ -726,7 +726,7 @@ export const RsvpSection: React.FC = () => {
                         <strong>{submittedGuest.prenom} {submittedGuest.nom}</strong>
                         {submittedGuest.nombre_invites > 1 && ` (+${submittedGuest.nombre_invites - 1} pers.)`}
                       </p>
-                      <p>📍 Château Saint-Georges • Grasse • 20 Juin 2026</p>
+                      <p>📍 Eglise Protestante de Dieuppeul &amp; Fun Time • 5 &amp; 6 Déc. 2026</p>
                     </div>
 
                     <p className="text-[11px] text-zinc-400 mt-4 italic">

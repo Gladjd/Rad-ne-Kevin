@@ -23,7 +23,7 @@ export const REAL_STORY_MILESTONES: MilestoneItem[] = [
     subtitle: 'L’Aube de notre Histoire',
     description:
       'Le premier échange, les premiers sourires et cette douce évidence que Dieu guidait nos pas l’un vers l’autre. Le tout début d’une aventure guidée par la Pureté et l’Amour.',
-    image: '/img/couple-1.jpg',
+    image: '/img/couple-17.jpeg',
     imagePosition: 'center 28%',
     tag: 'La Rencontre',
   },
@@ -143,9 +143,8 @@ export const StoryTimeline: React.FC = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: '-60px' }}
                   transition={{ duration: 0.8, delay: index * 0.12 }}
-                  className={`relative flex flex-col md:flex-row items-center ${
-                    isEven ? 'md:flex-row-reverse' : ''
-                  }`}
+                  className={`relative flex flex-col md:flex-row items-center ${isEven ? 'md:flex-row-reverse' : ''
+                    }`}
                 >
                   {/* Content Card */}
                   <div className="w-full md:w-1/2 p-2 sm:p-5">

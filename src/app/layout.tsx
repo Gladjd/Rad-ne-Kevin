@@ -6,12 +6,12 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://radene-kevin.com"),
   title: "Mariage de Radène & Kévin | 5 Décembre 2026 • Pureté, Amour & Charité",
   description:
-    "Célébrez le sacrement de mariage de Radène & Kévin le Samedi 5 Décembre 2026 à la Paroisse Sainte-Thérèse de Dieuppeul, Dakar. Confirmez votre présence (RSVP), découvrez le programme et partagez vos vœux.",
-  keywords: ["Mariage", "Radène et Kévin", "RSVP Mariage", "Paroisse Dieuppeul", "Dakar", "Pureté Amour Charité"],
+    "Célébrez le sacrement de mariage de Radène & Kévin le Samedi 5 Décembre 2026 à l'Eglise Protestante du Sénégal, Paroisse de Dieuppeul, Dakar, et la soirée de gala à la salle Fun Time. Confirmez votre présence (RSVP), découvrez le programme et partagez vos vœux.",
+  keywords: ["Mariage", "Radène et Kévin", "RSVP Mariage", "Eglise Protestante Dieuppeul", "Fun Time", "Dakar", "Pureté Amour Charité"],
   authors: [{ name: "Radène & Kévin" }],
   openGraph: {
-    title: "Mariage de Radène & Kévin | 5 Décembre 2026",
-    description: "Rejoignez-nous pour célébrer notre union sacrée à la Paroisse de Dieuppeul, Dakar.",
+    title: "Mariage de Radène & Kévin | 5 & 6 Décembre 2026",
+    description: "Rejoignez-nous pour célébrer notre union sacrée à l'Eglise Protestante du Sénégal (Dieuppeul) et à la salle de fête Fun Time à Dakar.",
     type: "website",
     locale: "fr_FR",
     images: [

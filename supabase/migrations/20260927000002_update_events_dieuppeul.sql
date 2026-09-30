@@ -1,9 +1,9 @@
 -- ==============================================================================
--- MIGRATION : MISE À JOUR DU PROGRAMME DU MARIAGE (PAROISSE DE DIEUPPEUL)
--- DATE DU MARIAGE : SAMEDI 5 DÉCEMBRE 2026
+-- MIGRATION : MISE À JOUR DU PROGRAMME OFFICIEL DU MARIAGE
+-- SAMEDI 5 DÉCEMBRE 2026 & DIMANCHE 6 DÉCEMBRE 2026 (DAKAR, SÉNÉGAL)
 -- ==============================================================================
 
--- 1. Nettoyage des événements mockés précédents si existants
+-- 1. Nettoyage des événements précédents
 DELETE FROM events WHERE id IN (
   'e1111111-1111-1111-1111-111111111111',
   'e2222222-2222-2222-2222-222222222222',
@@ -11,64 +11,42 @@ DELETE FROM events WHERE id IN (
   'e4444444-4444-4444-4444-444444444444'
 );
 
--- 2. Insertion des événements officiels du mariage de Radène & Kévin
+-- 2. Insertion des 3 événements officiels du mariage de Radène & Kévin
 INSERT INTO events (id, nom, date_heure, lieu, adresse, coordonnees_gps, description, dress_code, icone, ordre)
 VALUES
   (
     'e1111111-1111-1111-1111-111111111111',
-    'Bénédiction Nuptiale & Sacrement de Mariage',
-    '2026-12-05T15:00:00+00:00',
-    'Paroisse Sainte-Thérèse de Dieuppeul',
+    'Bénédiction nuptiale',
+    '2026-12-05T11:00:00+00:00',
+    'Eglise Protestante du Sénégal, Paroisse de Dieuppeul',
     'Allées Ababacar Sy, Dieuppeul-Derklé, Dakar, Sénégal',
-    '{"lat": 14.7126, "lng": -17.4589, "maps_url": "https://maps.google.com/?q=Paroisse+Sainte+Therese+Dieuppeul+Dakar"}'::jsonb,
-    'Célébration eucharistique solennelle et échange des consentements sacrés sous la bénédiction de Dieu et en présence de tous nos proches.',
+    '{"lat": 14.7126, "lng": -17.4589, "maps_url": "https://maps.google.com/?q=Eglise+Protestante+du+Senegal+Dieuppeul+Dakar"}'::jsonb,
+    'Célébration solennelle et échange des consentements sacrés sous la bénédiction divine en présence de nos familles et proches.',
     'Élégance Royale • Nuances Blanc Pur, Or & Bleu Roi',
-    'heart',
+    'church',
     1
   ),
   (
     'e2222222-2222-2222-2222-222222222222',
-    'Cocktail d’Honneur & Félicitations au Coucher du Soleil',
-    '2026-12-05T17:30:00+00:00',
-    'Jardins Royaux de Réception',
+    'Soirée de gala',
+    '2026-12-05T20:00:00+00:00',
+    'Salle de fête Fun Time',
     'Dakar, Sénégal',
-    '{"lat": 14.7126, "lng": -17.4589, "maps_url": "https://maps.google.com/?q=Paroisse+Sainte+Therese+Dieuppeul+Dakar"}'::jsonb,
-    'Coupes de champagne, bouchées gastronomiques raffinées et musique acoustique en live pour célébrer les nouveaux mariés.',
-    'Chic Majestueux & Tenues Traditionnelles Raffinées',
-    'wine',
+    '{"lat": 14.7126, "lng": -17.4589, "maps_url": "https://maps.google.com/?q=Salle+de+fete+Fun+Time+Dakar"}'::jsonb,
+    'Dîner de gala féerique, banquet d’exception, discours émouvants, ouverture du bal royal et célébration dansante jusqu’au bout de la nuit.',
+    'Black Tie / Smoking & Robes Longues de Soirée',
+    'sparkles',
     2
   ),
   (
     'e3333333-3333-3333-3333-333333333333',
-    'Dîner de Gala & Ouverture du Bal Royal',
-    '2026-12-05T20:30:00+00:00',
-    'Grande Salle Royale des Célébrations',
-    'Dakar, Sénégal',
-    '{"lat": 14.7126, "lng": -17.4589, "maps_url": "https://maps.google.com/?q=Paroisse+Sainte+Therese+Dieuppeul+Dakar"}'::jsonb,
-    'Banquet d’exception 4 services, discours surprises émouvants des familles et témoins, cascade de pièces montées dorées et nuit dansante.',
-    'Black Tie / Smoking & Robes Longues de Soirée',
-    'sparkles',
-    3
-  ),
-  (
-    'e4444444-4444-4444-4444-444444444444',
-    'Messe d’Action de Grâce & Brunch Convivial',
-    '2026-12-06T12:00:00+00:00',
-    'Résidence Privée & Espaces Détente',
-    'Dakar, Sénégal',
-    '{"lat": 14.7126, "lng": -17.4589, "maps_url": "https://maps.google.com/?q=Paroisse+Sainte+Therese+Dieuppeul+Dakar"}'::jsonb,
-    'Action de grâce, buffet gourmand aux saveurs locales et internationales, rafraîchissements et partage de souvenirs.',
-    'Garden Party Chic & Décontracté',
+    'Culte d’action de grâce',
+    '2026-12-06T10:00:00+00:00',
+    'Eglise Protestante du Sénégal, Paroisse de Dieuppeul',
+    'Allées Ababacar Sy, Dieuppeul-Derklé, Dakar, Sénégal',
+    '{"lat": 14.7126, "lng": -17.4589, "maps_url": "https://maps.google.com/?q=Eglise+Protestante+du+Senegal+Dieuppeul+Dakar"}'::jsonb,
+    'Culte d’action de grâce pour rendre gloire à Dieu pour cette sainte union, suivi de moments fraternels de partage et de convivialité.',
+    'Chic & Décontracté',
     'sun',
-    4
-  )
-ON CONFLICT (id) DO UPDATE SET
-  nom = EXCLUDED.nom,
-  date_heure = EXCLUDED.date_heure,
-  lieu = EXCLUDED.lieu,
-  adresse = EXCLUDED.adresse,
-  coordonnees_gps = EXCLUDED.coordonnees_gps,
-  description = EXCLUDED.description,
-  dress_code = EXCLUDED.dress_code,
-  icone = EXCLUDED.icone,
-  ordre = EXCLUDED.ordre;
+    3
+  );

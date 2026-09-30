@@ -28,7 +28,7 @@ export const Footer: React.FC = () => {
             Radène &amp; Kévin
           </span>
           <span className="font-serif-luxury text-xs sm:text-sm tracking-widest text-gold-200/80 uppercase mt-1 block">
-            Samedi 5 Décembre 2026 • Paroisse Sainte-Thérèse de Dieuppeul, Dakar
+            Samedi 5 &amp; Dimanche 6 Décembre 2026 • Eglise Protestante de Dieuppeul &amp; Fun Time, Dakar
           </span>
           <span className="text-[11px] text-zinc-400 tracking-wider uppercase mt-1 block font-medium">
             « Pureté • Amour • Charité »
